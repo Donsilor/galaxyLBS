@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>健康管理</title>
+  <link rel="stylesheet" href="css/element-ui/index.css">
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/systemManage_wjManage_bb.css">
+  <script src="js/loadcommonjs.js"></script>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="space"><a href="javascript:" id="warp" style="display: none;">WARP SPEED</a></canvas>
+
+  <div id="fixed-top">
+    <a href="javascript:" class="logo fl"><img src="images/commonLogo.png" alt=""></a>
+    <div class="fixed-top-nav fl">
+      <ul class="clf">
+        <li v-for="item in menus" :class="[currPath == item.path? 'active' : '',  item.css]"><a :href="item.path"><span
+          v-text="item.desc"></span></a></li>
+      </ul>
+    </div>
+    <div class="fixed-top-operate fr">
+      <div><a href="message.html"><img src="images/nav_iconEmail.png" alt=""></a></div>
+      <div>
+        <el-badge :value="amount" class="item">
+          <a href="alarmHistoryData.html"><img width="40" src="images/nav_iconWarn.png" alt=""></a>
+        </el-badge>
+      </div>
+      <div>
+        <a href="javascript:"><img src="images/nav_iconUser.png" alt=""></a>
+        <div class="subMenu">
+          <ul>
+            <li><a href="changePassword.html">修改密码</a></li>
+            <li><a href="javascript:void(0)" @click="logout">退出登录</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="fixed-side">
+    <div class="systemManage-nav">
+      <ul>
+        <li>
+          <a href="systemManage_peopleManage.html">人员管理</a>
+          <div>
+            <a href="systemManage_peopleManage.html">人员管理</a>
+            <a href="systemManage_organizeManage.html">组织管理</a>
+          </div>
+        </li>
+        <li><a href="systemManage_areaManage.html">区域管理</a></li>
+        <li>
+          <a href="systemManage_tacticsManage.html">策略管理</a>
+          <div>
+            <a href="systemManage_tacticsManage.html" class="active">围栏策略</a>
+          </div>
+        </li>
+        <li>
+          <a href="systemManage_equManage.html">设备管理</a>
+          <div>
+            <a href="systemManage_equManage.html">设备升级</a>
+          </div>
+        </li>
+        <li class="active">
+          <a href="systemManage_wjManage.html">文件管理</a>
+          <div>
+            <a href="systemManage_wjManage.html">地图管理</a>
+            <a href="systemManage_wjManage_bb.html" class="active">版本管理</a>
+          </div>
+        </li>
+        <li><a href="javascript:">二次开发</a></li>
+      </ul>
+    </div>
+  </div>
+  <div id="fixed-main-wrap">
+    <div id="abs-level3menu"></div>
+    <div id="abs-main">
+      <div class="rsect">
+        <div class="nav-t clf">
+          <div class="searchDiv">
+            <input type="search" title="" placeholder="请输入名称" v-model="search">
+            <button class="searchBtn" @click="getFilesList(1)"><i class="iconfont icon-xingtaiduICON_sousuo--"></i>
+            </button>
+          </div>
+          <a href="javascript:" @click="batchDelete">批量删除</a>
+          <a href="javascript:" class="addjw" @click="showAddPop">+增加脚本文件</a>
+        </div>
+        <div class="tab">
+          <span class="line"></span>
+          <table>
+            <tr class="fst">
+              <th><input type="checkbox" @change="selectAll"></th>
+              <th>序号</th>
+              <th>版本类型</th>
+              <th>名称</th>
+              <th>上传时间</th>
+              <th>操作</th>
+            </tr>
+            <tr v-for="(item, index) in list">
+              <td><input type="checkbox" :value="item.id" v-model="batchDeleteSet"></td>
+              <td>{{(currPage-1)*10 + index+1}}</td>
+              <td>基站版本</td>
+              <td>{{item.name}}</td>
+              <td>{{forMatDate(item.createdAt)}}</td>
+              <td>
+                <a href="javascript:" class="edit" @click="showEditPop(item)"><i class="iconfont icon-bianji"></i></a>
+                <a href="javascript:" class="delete" @click="deleteFile([item.id])"><i class="iconfont icon-delete"></i></a>
+              </td>
+            </tr>
+
+          </table>
+          <span class="line"></span>
+        </div>
+        <div class="paging">
+          <span class="total">共{{totalRows}}条</span>
+          <a href="javascript:" class="btn_prev" @click="pre"><i class="iconfont icon-xiangzuoanniu"></i></a>
+          <span :class="n==currPage?'number':''" v-for="n in totalPages" v-if="currPage-3<n && n < currPage+3"
+                @click="getStrategyList(n)"><a href="javascript:">{{n}}</a></span>
+          <a href="javascript:" class="btn_next" @click="post"><i
+            class="iconfont icon-xiangzuoanniu1"></i></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="layer" v-if="isShow">
+
+  <div id="addjiaob" class="popup">
+    <span class="x" @click="cancel">x</span>
+    <div class="nt clf"><span>{{popupTitle}}</span>
+      <a href="javascript:" @click="addFile" v-if="toAdd">确定</a>
+      <a href="javascript:" @click="editFile" v-if="toEdit">确定</a>
+      <a class="qqx" href="javascript:" @click="cancel">取消</a>
+    </div>
+    <div class="one"><span class="red" v-if="toAdd">*</span><span>版本名称</span>
+      <input type="text" v-model="addObj.name"/></div>
+
+      <div class="two" v-if="toAdd"><span class="red">*</span><span>版本类型</span>
+        <input type="checkbox" value="1" v-model="addObj.type"/>
+        <span>基站文件</span>
+      </div>
+      <div class="the clf" v-if="toAdd">选取文件
+        <input type="file" @change="changeFile" value="选取文件" />
+      </div>
+      <p v-if="toAdd">只能上传.bin文件</p>
+
+  </div>
+
+
+</div>
+<script src="js/common.js"></script>
+<script src="js/pages/header.js"></script>
+<script>
+
+  var files = new Vue({
+    el: '#fixed-main-wrap',
+    data: {
+      list: [],
+      search: '',
+      batchDeleteSet: [],
+      currPage: 1,
+      totalRows: 0,
+    },
+    computed: {
+      totalPages: function () {
+        return Math.ceil(this.totalRows / 10)
+      }
+    },
+
+    methods: {
+      forMatDate: function (ts) {
+        console.log(ts);
+        return moment(ts).format("YYYY-MM-DD HH:mm:ss")
+      },
+      pre: function () {
+        if (this.currPage > 1) {
+          this.getFilesList(this.currPage - 1)
+        }
+      },
+      post: function () {
+        if (this.currPage < Math.ceil(this.totalRows / 10)) {
+          this.getFilesList(this.currPage + 1)
+        }
+      },
+      getFilesList: function (currPage) {
+        const that = this;
+        that.currPage = currPage;
+        POST(URLs.allFilesImg, {
+          page: currPage || 1,
+          listRows: 10,
+          type: 1,
+          name: this.search,
+        }).then(function (res) {
+          if (res.errcode !== 10001) {
+              that.$message({
+                  message: res.msg,
+                  type: 'error'
+              });
+          } else {
+            that.list = res.data.result;
+            that.totalRows = res.data.totalRows;
+          }
+        }).catch(function (error) {
+          console.log(error);
+        });
+      },
+
+      selectAll: function (e) {
+        if (e.target.checked) {
+          this.batchDeleteSet = this.list.map(e => e.id);
+        } else {
+          this.batchDeleteSet = []
+        }
+      },
+
+      batchDelete: function () {
+        this.deleteFile(this.batchDeleteSet)
+      },
+
+      showAddPop: function () {
+        fileAdder.toAdd = true;
+        fileAdder.popupTitle = '增加版本文件';
+        fileAdder.addObj = {};
+      },
+
+      showEditPop: function (item) {
+        fileAdder.toEdit = true;
+        fileAdder.popupTitle = '修改版本文件信息';
+        fileAdder.addObj = JSON.parse(JSON.stringify(item));
+      },
+
+      deleteFile: function (list) {
+        const that = this;
+        POST(URLs.delMap, {ids: list}).then(function (res) {
+          if (res.errcode !== 10001) {
+            alert(res.msg)
+          } else {
+            files.getFilesList(1)
+          }
+        }).catch(function (error) {
+          console.log(error);
+        });
+      },
+
+      switchStrategy: function (e) {
+        const that = this;
+        POST(URLs.fdfsSwitch, {id: e.target.value, status: e.target.checked ? 1 : 0}).then(function (res) {
+          if (res.errcode !== 10001) {
+              that.$message({
+                  message: res.msg,
+                  type: 'error'
+              });
+          }
+        }).catch(function (error) {
+          console.log(error);
+        });
+      },
+    }
+  });
+
+  files.getFilesList(1);
+
+
+  var fileAdder = new Vue({
+    el: '#layer',
+    data: {
+      toAdd: false,
+      toEdit: false,
+      addObj: {
+        id: '',
+        file: {},
+        name: '',
+        type: 0,
+      }
+    },
+    computed: {
+      isShow: function () {
+        return this.toAdd || this.toEdit
+      }
+    },
+    methods: {
+      cancel: function () {
+        this.toAdd = false;
+        this.toEdit = false;
+      },
+
+      changeFile: function (e) {
+          const that = this;
+        console.log(e.target.files[0]);
+        const f = e.target.files[0]
+          if (!f.name.endsWith('.bin')) {
+              that.$message({
+                  message: '只能上传.bin文件',
+                  type: 'error'
+              });
+              return
+          }
+        this.addObj.file = f;
+      },
+      addFile: function () {
+        const that = this;
+        var config = {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        };
+        const fd = new FormData();
+        fd.append("name", this.addObj.name);
+        fd.append("type", this.addObj.type?1:2);
+        fd.append("file", this.addObj.file);
+        POST(URLs.upImg, fd, config).then(function (res) {
+          if (res.errcode !== 10001) {
+              that.$message({
+                  message: res.msg,
+                  type: 'error'
+              });
+          } else {
+            console.log('=============', res.data);
+            that.toAdd = false;
+            files.getFilesList(1)
+          }
+        }).catch(function (error) {
+          console.log(error);
+        });
+      },
+
+      editFile: function () {
+        const that = this;
+
+        POST(URLs.changeImg, this.addObj).then(function (res) {
+          if (res.errcode !== 10001) {
+              that.$message({
+                  message: res.msg,
+                  type: 'error'
+              });
+          } else {
+            console.log('=============', res.data);
+            that.toEdit = false;
+            files.getFilesList(1)
+          }
+        }).catch(function (error) {
+          console.log(error);
+        });
+      },
+    }
+  })
+
+
+</script>
+</body>
+</html>

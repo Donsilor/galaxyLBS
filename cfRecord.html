@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>历史考勤记录</title>
+  <link rel="stylesheet" href="css/element-ui/index.css">
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/clockingIn.css">
+  <link rel="stylesheet" href="iconfont/iconfont.css"/>
+  <script src="js/loadcommonjs.js"></script>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="space"><a href="javascript:" id="warp" style="display: none;">WARP SPEED</a></canvas>
+
+  <div id="fixed-top">
+    <a href="javascript:" class="logo fl"><img src="images/commonLogo.png" alt=""></a>
+    <div class="fixed-top-nav fl">
+      <ul class="clf">
+        <li v-for="item in menus" :class="[currPath == item.path? 'active' : '',  item.css]"><a :href="item.path"><span v-text="item.desc"></span></a></li>
+      </ul>
+    </div>
+    <div class="fixed-top-operate fr">
+      <div><a href="message.html"><img src="images/nav_iconEmail.png" alt=""></a></div>
+      <div>
+        <el-badge :value="amount" class="item">
+          <a href="alarmHistoryData.html"><img width="40" src="images/nav_iconWarn.png" alt=""></a>
+        </el-badge>
+      </div>
+      <div>
+        <a href="javascript:"><img src="images/nav_iconUser.png" alt=""></a>
+        <div class="subMenu">
+          <ul>
+            <li><a href="changePassword.html">修改密码</a></li>
+            <li><a href="javascript:void(0)" @click="logout">退出登录</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="fixed-main-wrap">
+    <div id="abs-level3menu"></div>
+    <div id="abs-main">
+      <div class="rsect">
+        <div class="nav-t clf">
+          <p class="nn-title">临时撤防记录</p>
+          <div class="searchDiv" onclick="history.back(-1);">
+            <i class="iconfont icon-xiangzuoanniu"></i><span>返回</span>
+          </div>
+
+          <a href="javascript:" class="fl btn">显示全部</a>
+          <a href="javascript:" class="fr btn" @click="createExcel">导出报表</a>
+          <div class="relDiv fr">
+            <a href="javascript:" id="filterBtn" class="fr btn" @click="toggleFilter">高级筛选<i class="iconfont icon-shaixuan"></i></a>
+            <div id="filterAbsDiv" class="filterAbsDiv" v-show="isMore">
+              <div class="bgBox">
+                <a href="javascript:" @click="toggleFilter" class="closeBtn"><i class="iconfont icon-guanbi"></i></a>
+                <form action="#">
+                  <!--<span class="fl">关键字</span>-->
+                  <div class="option">
+                    <label for="searchType_1">姓 &nbsp;&nbsp;名<input type="text" name="searchType" id="searchType_1" v-model="personName" placeholder="选填项"></label>
+                    <label for="searchType_2">编 &nbsp;&nbsp;号<input type="text" name="searchType" id="searchType_2" v-model="personCode" placeholder="选填项"></label>
+                    <label for="searchType_3">监仓号<input type="text" name="searchType" id="searchType_3" v-model="departmentName" placeholder="选填项"></label>
+                  </div>
+                  <!--<input type="text" title="" v-model="searchKeyWord">-->
+                </form>
+                <div class="option">
+                  <span class="fl">撤防原因</span>
+                  <div class="r_content">
+                    <span v-for="e in disarmingList">
+                      <input type="checkbox" :id="e.disarmingId" v-model="disarmingIdList" hidden :value="e.disarmingId">
+                      <label :for="e.disarmingId">{{e.disarmingName}}</label>
+                    </span>
+                  </div>
+                </div>
+                <div class="option">
+                  <span class="fl">状&emsp;态</span>
+                  <div class="r_content">
+                    <span>
+                      <input id="zt-1" type="checkbox" title="" hidden value="1" v-model="availableList">
+                      <label for="zt-1">未启用</label>
+                    </span>
+                    <span>
+                      <input id="zt-2" type="checkbox" title="" hidden value="2" v-model="availableList">
+                      <label for="zt-2">撤防中</label>
+                    </span>
+                    <span>
+                      <input id="zt-3" type="checkbox" title="" hidden value="0" v-model="availableList">
+                      <label for="zt-3">已结束</label>
+                    </span>
+                  </div>
+                </div>
+                <div class="option">
+                  <span class="fl">时&emsp;间</span>
+                  <div class="dd">
+                    <div class="fl" style="margin-right: .5rem;">
+                      <el-date-picker v-model="startTime" type="datetime" placeholder="开始时间"
+                                      align="right" size="mini"
+                                      :picker-options="pickerOptions1"></el-date-picker>
+                      到
+                      <el-date-picker v-model="endTime" type="datetime" placeholder="结束时间"
+                                      align="right" size="mini"
+                                      :picker-options="pickerOptions1"></el-date-picker>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="submit">
+                  <a @click="getCheFangList(1)">搜索</a>
+                  <a @click="cleanFilter">重置</a>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+        <div class="tab">
+          <span class="line"></span>
+          <table>
+            <tr class="fst">
+              <th>序号</th>
+              <th>姓名</th>
+              <th>编号</th>
+              <th>监仓</th>
+              <th>撤防原因</th>
+              <th>开始时间</th>
+              <th>结束时间</th>
+              <th>状态</th>
+            </tr>
+            <tr v-for="(item, index) in list">
+              <td>{{(currPage-1)*10 + index+1}}</td>
+              <td>{{item.personName}}</td>
+              <td>{{item.personCode}}</td>
+              <td>{{item.departmentName}}</td>
+              <td>{{item.disarmingName}}</td>
+              <td>{{item.startTimeStr}}</td>
+              <td>{{item.endTimeStr}}</td>
+              <td>{{item.available==0?"已结束":item.available==1?"未启用":item.available==2?"撤防中":""}}</td>
+            </tr>
+          </table>
+          <span class="line"></span>
+        </div>
+        <div class="paging">
+          <span class="total">共{{totalRows}}条</span>
+          <a href="javascript:" class="btn_prev" @click="pre"><i class="iconfont icon-xiangzuoanniu"></i></a>
+          <span :class="n==currPage?'number':''" v-for="n in totalPages" v-if="currPage-3<n && n < currPage+3"
+                @click="getCheFangList(n)"><a href="javascript:">{{n}}</a></span>
+          <a href="javascript:" class="btn_next" @click="post"><i
+            class="iconfont icon-xiangzuoanniu1"></i></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!--<div id="layer"></div>-->
+<div id="addPeople" class="popup">
+  <a href="javascript:" class="closeBtn"><i class="iconfont icon-guanbi"></i></a>
+  <div class="bg1"></div>
+  <div class="bg2"></div>
+  <div class="clf">
+    <div class="list-title fl"><span>新增人员</span></div>
+    <div class="listnav-r fr">
+      <a href="#" class="qd fl">确定</a>
+      <a href="javascript:" class="qx fl cancelBtn">取消</a>
+    </div>
+  </div>
+  <div class="sect">
+    <div>
+      <div class="fl">
+        <span class="red">*</span><span>编号</span>
+        <input type="text" placeholder="">
+      </div>
+      <div class="fr">
+        <span class="red">*</span><span>姓名</span>
+        <input type="text" placeholder="">
+      </div>
+    </div>
+    <div>
+      <div class="fl">
+        <span class="red">*</span><span>手环ID</span>
+        <input type="text" placeholder="">
+      </div>
+      <div class="fr">
+        <span class="red">*</span><span>年龄</span>
+        <input type="text" placeholder="">
+      </div>
+    </div>
+    <div>
+      <div class="fl">
+        <span class="red">*</span><span>所属监仓</span>
+        <select title="">
+          <option value='' disabled selected style='display:none;'>请选择</option>
+          <option>1</option>
+          <option>2</option>
+          <option>3</option>
+        </select>
+      </div>
+      <div class="fr">
+        <span class="red">*</span><span>收押日期</span>
+        <select title="">
+          <option value='' disabled selected style='display:none;'>请选择</option>
+          <option>1</option>
+          <option>2</option>
+          <option>3</option>
+        </select>
+      </div>
+    </div>
+    <div><span>备注</span><input class="ms" type="text"></div>
+  </div>
+</div>
+<div id="warnPopup" class="popup">
+  <a href="javascript:" class="closeBtn"></a>
+  <p><img src="images/icon_warn.png" alt="">筛选结果最多支持10000条数据！</p>
+</div>
+
+<script src="js/common.js"></script>
+<script src="js/pages/header.js"></script>
+<script src="js/qs.min.js"></script>
+<script>
+var chefang = new Vue({
+  el: '#fixed-main-wrap',
+  data: {
+    pickerOptions1: {
+      shortcuts: [{
+        text: '今天',
+        onClick (picker) {
+          picker.$emit('pick', new Date())
+        }
+      }, {
+        text: '昨天',
+        onClick (picker) {
+          const date = new Date()
+          date.setTime(date.getTime() - 3600 * 1000 * 24)
+          picker.$emit('pick', date)
+        }
+      }, {
+        text: '一周前',
+        onClick (picker) {
+          const date = new Date()
+          date.setTime(date.getTime() - 3600 * 1000 * 24 * 7)
+          picker.$emit('pick', date)
+        }
+      }]
+    },
+
+    startTime: '',//new Date().getTime() - 3600 * 1000 * 24,
+    endTime: '',//new Date().getTime() ,
+
+    isMore: false,
+    list: [],
+    currPage: 1,
+    totalRows: 0,
+
+    disarmingList: [],
+
+    personName: '',
+    personCode: '',
+    departmentName: '',
+
+    disarmingIdList: [],
+    availableList: []
+  },
+
+  computed: {
+    totalPages: function () {
+      console.log('=================', this.searchType, this.disarmingIdList)
+      return Math.ceil(this.totalRows / 10)
+    }
+  },
+
+  methods: {
+
+    pre: function () {
+      if (this.currPage > 1) {
+        this.getCheFangList(this.currPage - 1)
+      }
+    },
+    post: function () {
+      if (this.currPage < Math.ceil(this.totalRows / 10)) {
+        this.getCheFangList(this.currPage + 1)
+      }
+    },
+
+    toggleFilter: function () {
+      this.isMore = !this.isMore
+    },
+    filterHide: function () {
+      this.isMore = false
+    },
+
+    cleanFilter: function () {
+      this.personName = ''
+      this.personCode = ''
+      this.departmentName = ''
+      this.disarmingIdList = []
+      this.availableList = []
+      this.startTime = ''
+      this.endTime = ''
+    },
+
+    getCheFangList: function (n) {
+      const that = this
+      POST(URLs.disarming_listDisarmingRecord, {
+        page: n || 1,
+        listRows: 10,
+        personName: that.personName,
+        personCode: that.personCode,
+        departmentName: that.departmentName,
+        disarmingIdList: that.disarmingIdList,
+        availableList: that.availableList,
+        startTime: that.startTime !== '' ? that.startTime.getTime() : '',
+        endTime: that.endTime !== '' ? that.endTime.getTime() : ''
+      }).then(function (res) {
+        if (res.errcode !== 10001) {
+          //alert(res.msg)
+          that.list = []
+          that.totalRows = 0
+        } else {
+
+          that.list = res.data.result || []
+          that.currPage = n || 1
+          that.totalRows = res.data.totalRows
+          console.log('==========', that.list)
+        }
+      }).catch(function (error) {
+        console.log(error)
+      })
+    },
+
+    createExcel: function () {
+      const that = this
+      var config = {
+        headers: {
+          'Content-Type': 'X-WWW-FORM-URLENCODED'
+        }
+      }
+      window.location = DownLoadURL(URLs.disarming_createExcel + '?' + Qs.stringify(
+        {
+          personName: that.personName !== '' ? encodeURIComponent(that.personName) : '',
+          personCode: that.personCode !== '' ? that.personCode : '',
+          departmentName: that.departmentName !== '' ? encodeURIComponent(that.departmentName) : '',
+
+          disarmingIdList: that.disarmingIdList.join(','),
+          availableList: that.availableList.join(','),
+          startTime: that.startTime !== '' ? that.startTime.getTime() : '',
+          endTime: that.endTime !== '' ? that.endTime.getTime() : ''
+        }))
+    },
+
+    getDisarmingList: function () {
+      const that = this
+      POST(URLs.disarming_disarmingList, {}).then(function (res) {
+        if (res.errcode !== 10001) {
+          //alert(res.msg)
+          that.disarmingList = []
+        } else {
+          that.disarmingList = res.data || []
+        }
+      }).catch(function (error) {
+        console.log(error)
+      })
+    }
+
+  }
+})
+chefang.getCheFangList()
+chefang.getDisarmingList()
+
+
+</script>
+</body>
+</html>
+
+
+
+

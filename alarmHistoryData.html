@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>告警历史数据</title>
+  <link rel="stylesheet" href="css/element-ui/index.css">
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/alarmHistoryData.css">
+  <script src="js/loadcommonjs.js"></script>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="space"><a href="javascript:" id="warp" style="display: none;">WARP SPEED</a></canvas>
+
+  <div id="fixed-top">
+    <a href="javascript:" class="logo fl"><img src="images/commonLogo.png" alt=""></a>
+    <div class="fixed-top-nav fl">
+      <ul class="clf">
+        <li v-for="item in menus" :class="[currPath == item.path? 'active' : '',  item.css]"><a :href="item.path"><span
+          v-text="item.desc"></span></a></li>
+      </ul>
+    </div>
+    <div class="fixed-top-operate fr">
+      <div><a href="message.html"><img src="images/nav_iconEmail.png" alt=""></a></div>
+      <div>
+        <el-badge :value="amount" class="item">
+          <a href="alarmHistoryData.html"><img width="40" src="images/nav_iconWarn.png" alt=""></a>
+        </el-badge>
+      </div>
+      <div>
+        <a href="javascript:"><img src="images/nav_iconUser.png" alt=""></a>
+        <div class="subMenu">
+          <ul>
+            <li><a href="changePassword.html">修改密码</a></li>
+            <li><a href="javascript:void(0)" @click="logout">退出登录</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div id="fixed-side"></div>
+  <div id="fixed-main-wrap">
+    <div id="abs-level3menu"></div>
+    <div id="abs-main">
+      <div class="alarmHistoryDataDiv">
+        <div class="clf btns">
+          <p class="nn-title">历史告警记录</p>
+          <a href="javascript:" class="fl return"><i><img src="images/icon_1.png" alt=""></i>返回</a>
+          <a href="javascript:" class="fl btn display_all">显示全部</a>
+          <a href="javascript:" class="fr btn export" @click="createExcel">导出报表</a>
+          <div class="relDiv fr">
+            <a href="javascript:" id="filterBtn" class="fr btn filter">高级筛选
+              <i><img src="images/icon_5.png" alt=""></i></a>
+
+
+            <div id="filterAbsDiv" class="filterAbsDiv" v-show="isMore">
+              <a href="javascript:" class="closeBtn">
+                <i class="iconfont icon-guanbi"></i>
+              </a>
+              <div class="option">
+                <label for="ip1">
+                  姓 &nbsp;&nbsp;名 <input type="text" v-model="personName" id="ip1" placeholder="选填项">
+                </label>
+                <label for="ip2">
+                  编 &nbsp;&nbsp;号 <input type="text" v-model="personCode" id="ip2" placeholder="选填项">
+                </label>
+                <label for="ip3">
+                  监仓号 <input type="text" v-model="departmentName" id="ip3" placeholder="选填项">
+                </label>
+              </div>
+              <div class="option">
+                <span class="fl">级 &nbsp;&nbsp;别</span>
+                <div class="r_content">
+                  <input id="jb-1" type="checkbox" v-model="levelList" value="2" hidden>
+                  <label for="jb-1">重要</label>
+                  <input id="jb-2" type="checkbox" v-model="levelList" value="1" hidden>
+                  <label for="jb-2">普通</label>
+                  <input id="jb-3" type="checkbox" v-model="levelList" value="0" hidden>
+                  <label for="jb-3">提示</label>
+                </div>
+
+              </div>
+              <div class="option">
+                <span class="fl">类&emsp;型</span>
+                <div class="r_content">
+                  <input id="lx-1" type="checkbox" v-model="typeList" value="0" hidden>
+                  <label for="lx-1">围栏告警</label>
+                  <input id="lx-2" type="checkbox" v-model="typeList" value="1" hidden>
+                  <label for="lx-2">心率告警</label>
+                  <input id="lx-3" type="checkbox" v-model="typeList" value="3" hidden>
+                  <label for="lx-3">电量告警</label>
+                  <input id="lx-4" type="checkbox" v-model="typeList" value="4" hidden>
+                  <label for="lx-4">求救告警</label>
+                  <input id="lx-5" type="checkbox" v-model="typeList" value="5" hidden>
+                  <label for="lx-5">腕带告警</label>
+                </div>
+
+              </div>
+
+              <div class="option">
+                <span class="fl">状&emsp;态</span>
+                <div class="r_content">
+                  <input id="zt-0" type="checkbox" v-model="statusList" value="2" hidden>
+                  <label for="zt-0">误报</label>
+                  <input id="zt-1" type="checkbox" v-model="statusList" value="0" hidden>
+                  <label for="zt-1">未处理</label>
+                  <input id="zt-2" type="checkbox" v-model="statusList" value="1" hidden>
+                  <label for="zt-2">已处理</label>
+                </div>
+              </div>
+              <div class="option">
+                <span class="fl">时&emsp;间</span>
+                <div class="r_content">
+                  <el-date-picker v-model="startTime" type="datetime" placeholder="开始时间" align="right"
+                                  size="mini"></el-date-picker>
+                  到
+                  <el-date-picker v-model="endTime" type="datetime" placeholder="结束时间" align="right"
+                                  size="mini"></el-date-picker>
+                </div>
+              </div>
+
+              <div class="submit">
+                <a @click="getWarnings(1)">搜索</a>
+                <a @click="cleanFilter">重置</a>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <div class="table">
+          <table id="table">
+            <tr class="tr">
+              <th>序号</th>
+              <th><a href="javascript:">姓名<i><img src="images/icon_4.png" alt=""></i></a></th>
+              <th><a href="javascript:">编号<i><img src="images/icon_4.png" alt=""></i></a></th>
+              <th><a href="javascript:">监仓<i><img src="images/icon_4.png" alt=""></i></a></th>
+              <th><a href="javascript:">级别<i><img src="images/icon_4.png" alt=""></i></a></th>
+              <th><a href="javascript:">类型<i><img src="images/icon_4.png" alt=""></i></a></th>
+              <th><a href="javascript:">区域<i><img src="images/icon_4.png" alt=""></i></a></th>
+              <th><a href="javascript:">开始时间<i><img src="images/icon_4.png" alt=""></i></a></th>
+              <th><a href="javascript:">结束时间<i><img src="images/icon_4.png" alt=""></i></a></th>
+              <th><a href="javascript:">状态<i><img src="images/icon_4.png" alt=""></i></a></th>
+              <th><a href="javascript:">查看</a></th>
+            </tr>
+            <tr class="tr" v-for="(item, index) in list">
+              <td>{{index+1}}</td>
+              <td>{{item.personName}}</td>
+              <td>{{item.personCode}}</td>
+              <td>{{item.departmentName}}</td>
+              <td>{{item.level==0?'提示':item.level==1?'普通':item.level==2?'严重':''}}</td>
+              <td>
+                {{item.type==0?'围栏报警':item.type==1?'心率报警':item.type==3?'电量告警':item.type==4?'SOS求救告警':item.type==5?'暴拆告警':''}}
+              </td>
+              <!-- 0 围栏告警 1 心率告警 3 电量告警 4 SOS求救告警 5 暴拆告警-->
+              <td>{{item.fenceName}}</td>
+              <td>{{item.startTimeStr}}</td>
+              <td>{{item.finishTimeStr}}</td>
+              <td class="st">
+                <a href="javascript:">{{item.status==0?'未处理':item.status==1?'已处理':'误 报'}} <i><img
+                  src="images/icon_3.png" alt=""></i></a>
+                <div class="pop">
+                  <a href="javascript:" @click="updateWarnings(item.id, 2)">误 报</a>
+                  <a href="javascript:" @click="updateWarnings(item.id, 1)">已处理</a>
+                  <a href="javascript:" @click="updateWarnings(item.id, 0)">未处理</a>
+                </div>
+              </td>
+              <td><a href="javascript:"><img src="images/icon_2.png" alt=""></a></td>
+            </tr>
+          </table>
+        </div>
+
+
+        <div class="paging">
+          <span class="total">共{{totalRows}}条{{totalPages}}页</span>
+          <a href="javascript:" class="btn_prev" @click="pre"><i class="iconfont icon-xiangzuoanniu"></i></a>
+          <span :class="n==currPage?'number':''" v-for="n in totalPages" v-if="currPage-3<n && n < currPage+3"
+                @click="getWarnings(n)"><a href="javascript:">{{n}}</a></span>
+          <a href="javascript:" class="btn_next" @click="post"><i
+            class="iconfont icon-xiangzuoanniu1"></i></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="js/common.js"></script>
+<script src="js/pages/header.js"></script>
+<script src="js/qs.min.js"></script>
+<script>
+
+$(function () {
+  var filterBtn = $('#filterBtn')
+  var filterAbsDiv = $('#filterAbsDiv')
+  var closeBtn = $('.closeBtn')
+  filterBtn.on('click', function () {
+    filterAbsDiv.show()
+  })
+  closeBtn.on('click', function () {
+    filterAbsDiv.hide()
+  })
+})
+
+var warnings = new Vue({
+  el: '#fixed-main-wrap',
+  data: {
+    isMore: false,
+    list: [],
+    search: '',
+    batchDeleteSet: [],
+    currPage: 1,
+    totalRows: 0,
+
+    levelList: [],
+    typeList: [],
+    statusList: [],
+
+    startTime: '',//new Date().getTime() - 3600 * 1000 * 24,
+    endTime: '',//new Date().getTime() ,
+
+    personName: '',
+    personCode: '',
+    departmentName: ''
+
+  },
+  computed: {
+    totalPages: function () {
+      return Math.ceil(this.totalRows / 10)
+    }
+  },
+  methods: {
+    pre: function () {
+      if (this.currPage > 1) {
+        this.getWarnings(this.currPage - 1)
+      }
+    },
+    post: function () {
+      if (this.currPage < Math.ceil(this.totalRows / 10)) {
+        this.getWarnings(this.currPage + 1)
+      }
+    },
+
+    updateWarnings: function (id, status) {
+      const that = this
+      POST(URLs.warningUpdate, {
+        id: id,
+        status: status,
+        remark: ''
+      }).then(function (res) {
+        if (res.errcode !== 10001) {
+          alert(res.msg)
+        } else {
+          console.log('=============', res.data)
+          that.getWarnings(that.currPage)
+        }
+      }).catch(function (error) {
+        console.log(error)
+      })
+    },
+
+    cleanFilter: function () {
+      this.personName = ''
+      this.personCode = ''
+      this.departmentName = ''
+      this.levelList = []
+      this.typeList = []
+      this.status = ''
+      this.startTime = ''
+      this.endTime = ''
+    },
+
+    getWarnings: function (currPage) {
+      console.log('==============', currPage)
+      const that = this
+      that.currPage = currPage
+
+      POST(URLs.warnings, {
+        page: currPage || 1,
+        listRows: 10,
+        personName: that.personName,
+        personCode: that.personCode,
+        departmentName: that.departmentName,
+        levelList: that.levelList,
+        typeList: that.typeList,
+        statusList: that.statusList,
+        startTime: that.startTime,
+        endTime: that.endTime
+      }).then(function (res) {
+        if (res.errcode !== 10001) {
+          alert(res.msg)
+        } else {
+          console.log('=============', res.data)
+          that.list = res.data.result
+          that.totalRows = res.data.totalRows
+        }
+      }).catch(function (error) {
+        console.log(error)
+      })
+    },
+
+    createExcel: function () {
+      const that = this
+      var config = {
+        headers: {
+          'Content-Type': 'X-WWW-FORM-URLENCODED'
+        }
+      }
+
+      window.location = DownLoadURL(URLs.warningCreateExcel + '?' + Qs.stringify(
+        {
+          personName: that.personName !== '' ? encodeURIComponent(that.personName) : '',
+          personCode: that.personCode !== '' ? that.personCode : '',
+          departmentName: that.departmentName !== '' ? encodeURIComponent(that.departmentName) : '',
+          levelList: that.levelList.join(','),
+          typeList: that.typeList.join(','),
+          status: 1
+//                 startTime: '',
+//                  endTime:''
+        }))
+    }
+  }
+})
+
+warnings.getWarnings(1)
+
+
+</script>
+</body>
+</html>

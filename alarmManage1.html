@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>告警管理</title>
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/alarmManage.css">
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="space"><a href="javascript:" id="warp" style="display: none;">WARP SPEED</a></canvas>
+
+  <div id="fixed-top">
+    <a href="javascript:" class="logo fl"><img src="images/commonLogo.png" alt=""></a>
+    <div class="fixed-top-nav fl">
+      <ul class="clf">
+        <li v-for="item in menus"><a :href="item.path" :class="item.css" ><span v-text="item.desc"></span></a></li>
+      </ul>
+    </div>
+    <div class="fixed-top-operate fr">
+      <div><a href="message.html"><img src="images/nav_iconEmail.png" alt=""></a></div>
+      <div><a href="alarmHistoryData.html"><img src="images/nav_iconWarn.png" alt=""></a></div>
+      <div>
+        <a href="javascript:"><img src="images/nav_iconUser.png" alt=""></a>
+        <div class="subMenu">
+          <ul>
+            <li><a href="changePassword.html">修改密码</a></li>
+            <li><a href="javascript:">退出登录</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="fixed-side">
+    <div class="fixed-side-nav">
+      <form action="" class="searchDiv">
+        <input type="text" placeholder="请输入姓名">
+        <button></button>
+      </form>
+      <div class="sideList">
+        <!--<tree-menu v-bind:item="organization"/>-->
+      </div>
+      <a href="javascript:" class="toggleBtn unfold"></a>
+    </div>
+  </div>
+  <div id="fixed-main-wrap">
+    <div id="abs-level3menu"></div>
+    <div id="abs-main">
+      <div class="chartDiv-row">
+        <div class="chartDiv-col">
+          <div class="chartDiv-cel">
+            <div class="chartTitle">今日告警</div>
+            <div id="todayAlarm" class="echart"></div>
+          </div>
+        </div>
+        <div class="chartDiv-col">
+          <div class="chartDiv-cel">
+            <div class="chartTitle">本月告警</div>
+            <div id="currentMonthAlarm" class="echart"></div>
+          </div>
+        </div>
+      </div>
+      <div class="chartDiv-row">
+        <div class="chartDiv-col">
+          <div class="chartDiv-cel">
+            <div class="chartTitle">告警次数</div>
+            <div id="" class="echart"></div>
+          </div>
+        </div>
+        <div class="chartDiv-col">
+          <div class="chartDiv-cel"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="./js/loadcommonjs.js"></script>
+<script src="js/echarts.min.js"></script>
+<script src="js/common.js"></script>
+<script src="js/com.js"></script>
+<script src="js/pages/header.js"></script>
+<script>
+
+  var todayAlarm = echarts.init(document.getElementById('todayAlarm'));
+  var todayAlarmOption = {
+    tooltip : {
+      trigger: 'item',
+      formatter: "{a} <br/>{b} : {c} ({d}%)"
+    },
+    series : [
+      {
+        name: '告警数',
+        type: 'pie',
+        label: {
+          position: 'inside'
+        },
+        radius : '75%',
+        center: ['50%', '50%'],
+        data:[
+          {value:335, name:'普通'},
+          {value:310, name:'提示'},
+          {value:234, name:'严重'}
+        ],
+        itemStyle: {
+          emphasis: {
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.5)'
+          }
+        },
+        color: ['#d48265', '#91c7ae', '#c23531']
+      }
+    ]
+  };
+
+  var currentMonthAlarm = echarts.init(document.getElementById('currentMonthAlarm'));
+  var currentMonthAlarmOption = {
+    tooltip : {
+      trigger: 'item',
+      formatter: "{a} <br/>{b} : {c} ({d}%)"
+    },
+    series : [
+      {
+        name: '告警数',
+        type: 'pie',
+        label: {
+          position: 'inside'
+        },
+        radius : '75%',
+        center: ['50%', '50%'],
+        data:[
+          {value:335, name:'普通'},
+          {value:310, name:'提示'},
+          {value:234, name:'严重'}
+        ],
+        itemStyle: {
+          emphasis: {
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.5)'
+          }
+        },
+        color: ['#d48265', '#91c7ae', '#c23531']
+      }
+    ]
+  };
+
+  $(function () {
+
+    todayAlarm.setOption(todayAlarmOption);
+    currentMonthAlarm.setOption(currentMonthAlarmOption);
+
+  });
+
+  $(window).resize(function () {
+
+    todayAlarm.resize();
+    currentMonthAlarm.resize();
+
+  })
+
+  var alarm = new Vue({
+      el: '#fixed-main-wrap',
+      data: {
+          coordinates: {},
+          startTime: parseInt(new Date(new Date() - 24 * 60 * 60 * 1000).getTime()/1000),
+          endTime: parseInt(new Date().getTime()/1000),
+      },
+      methods: {
+          //查询告警
+          getWarnings: function () {
+              const that = this;
+              POST(URLs.warnings, {
+                  personCodes: [],
+                  startTime: this.startTime,
+                  endTime: this.endTime
+              }).then(function (res) {
+                  if (res.errcode !== 10001) {
+                      alert(res.msg)
+                  } else {
+                      console.log('=============', res.data)
+                      that.coordinates = res.data;
+                  }
+              }).catch(function (error) {
+                  console.log(error);
+              });
+          },
+
+          getWarningsAmount: function () {
+              const that = this;
+              POST(URLs.warningsAmount, {}).then(function (res) {
+                  if (res.errcode !== 10001) {
+                      alert(res.msg)
+                  } else {
+                    console.log(res.data.amount)
+                  }
+              }).catch(function (error) {
+                  console.log(error);
+              });
+          },
+
+          getWarningsStatistics: function () {
+              const that = this;
+              POST(URLs.statistics, {}).then(function (res) {
+                  if (res.errcode !== 10001) {
+                      alert(res.msg)
+                  } else {
+                      console.log(res.data)
+                  }
+              }).catch(function (error) {
+                  console.log(error);
+              });
+          },
+      }
+  })
+
+  alarm.getWarningsStatistics();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+.loginMain{position: fixed;top:0;right: 0;bottom: 0;left: 0;background: url("../images/loginBg.jpg") no-repeat center/cover;}
+.loginMain .mainTitle{position: fixed;top: 15%;left: 10%;}
+.loginMain .loginForm{width: 380px;height: 400px;background: url("../images/loginFormBg.png") no-repeat center/contain;position: fixed;top: 32%;right: 10%;padding: 20px 45px 0 40px;}
+.loginMain .loginForm > h4{font: 16px/2 'Microsoft YaHei';text-align: center;border-bottom: 1px solid #8ea1a9;}
+.loginMain .loginForm .inputDiv{height: 50px;position: relative;margin-bottom: 20px;}
+.loginMain .loginForm .inputDiv input{width: 100%;height: 100%;padding: 0 20px;background-color: rgba(19,67,77,.5);border: 1px solid #7feaff;}
+.loginMain .loginForm .inputDiv input::-webkit-input-placeholder{color:#fff;}
+.loginMain .loginForm .inputDiv input:-moz-placeholder{color:#fff;}
+.loginMain .loginForm .inputDiv input::-moz-placeholder{color:#fff;}
+.loginMain .loginForm .inputDiv input:-ms-input-placeholder{color:#fff;}
+
+.loginMain .loginForm .captcha{position: absolute;right: 9px;top: 4px;bottom: 4px;width: 90px;}
+.loginMain .loginForm .captcha img{display: block;height: 100%;}
+.loginMain .loginForm .passHandle{margin-bottom: 20px;}
+.loginMain .loginForm .passHandle label{font-size: 12px;}
+.loginMain .loginForm .passHandle a{text-decoration: underline;}
+
+
+.loginMain .loginForm .loginButton{display: block;width: 100%;background: none;}
+.loginMain .loginForm .loginButton img{display: block;width: 100%;}
+

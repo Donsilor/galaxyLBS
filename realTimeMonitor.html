@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>实时监控</title>
+  <!-- 引入样式 -->
+  <link rel="stylesheet" href="css/element-ui/index.css">
+  <link rel="stylesheet" href="css/swiper.min.css">
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/realTimeMonitor.css">
+  <script src="js/loadcommonjs.js"></script>
+</head>
+<body>
+
+<div id="wrap">
+  <canvas id="space"><a href="javascript:" id="warp" style="display: none;">WARP SPEED</a></canvas>
+  <div id="fixed-top">
+    <a href="javascript:" class="logo fl"><img src="images/commonLogo.png" alt=""></a>
+    <div class="fixed-top-nav fl">
+      <ul class="clf">
+        <li v-for="item in menus" :class="[currPath == item.path? 'active' : '',  item.css]"><a
+          :href="item.path"><span
+          v-text="item.desc"></span></a></li>
+      </ul>
+    </div>
+    <div class="fixed-top-operate fr">
+      <div><a href="message.html"><img src="images/nav_iconEmail.png" alt=""></a></div>
+      <div>
+        <el-badge :value="amount" class="item">
+          <a href="alarmHistoryData.html"><img width="40" src="images/nav_iconWarn.png" alt=""></a>
+        </el-badge>
+      </div>
+      <div>
+        <a href="javascript:"><img src="images/nav_iconUser.png" alt=""></a>
+        <div class="subMenu">
+          <ul>
+            <li><a href="changePassword.html">修改密码</a></li>
+            <li><a href="javascript:void(0)" @click="logout">退出登录</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="fixed-side">
+    <div class="fixed-side-nav">
+      <el-input
+        placeholder="输入关键字进行过滤"
+        v-model="filterText">
+      </el-input>
+
+      <el-tree
+        class="filter-tree"
+        :data="organization"
+        :props="defaultProps"
+        node-key="id"
+        show-checkbox
+        highlight-current
+        :default-checked-keys="defaultCheckedKeys"
+        :default-expanded-keys="defaultExpandedKeys"
+        :filter-node-method="filterNode"
+        @node-click="nodeClick"
+        @check="checkChange"
+        ref="tree2">
+      </el-tree>
+      <a href="javascript:" class="toggleBtn unfold"></a>
+    </div>
+  </div>
+  <div id="monitor">
+    <div id="fixed-main-wrap">
+      <div id="abs-level3menu">
+        <!--
+                <div class="infoPopup popup" >
+                  <span>姓名：{{selectNode.personName}}</span>
+                  <span>年龄：{{selectNode.age}}</span>
+                  <span>心率： {{selectNode.heartRate}}</span>
+                  <span>血压：120/80</span>
+                  <span>犯罪类型：{{selectNode.prisonCause}}</span>
+                  <a href="javascript:" class="closeBtn"></a>
+                </div>
+        -->
+        <div class="filterDiv fr">
+          <label><input type="checkbox" value="1" v-model="filter">显示名字</label>
+          <label><input type="checkbox" value="2" v-model="filter">显示轨迹</label>
+          <label><input type="checkbox" value="3" v-model="filter" @change="onfilter">显示围栏</label>
+        </div>
+      </div>
+      <div id="abs-main">
+        <div class="floorPlanDiv" id="floorPlanDiv">
+          <div id="dragObj" onmousewheel="return zoomFn(this)">
+            <div class="dragLayer">
+              <canvas class="c1" id="option" :width="width" :height="height" style="cursor:pointer;"></canvas>
+              <canvas class="c2" id="area" :width="width" :height="height" style="cursor:pointer"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="popup infoPopup" v-if="isToShowNodeInfo">
+        <a href="javascript:" class="closeBtn" @click="notShowNodeInfo"></a>
+        <div class="headPortrait fl">
+          <img src="images/temp_img_1.jpg" alt="">
+        </div>
+        <div class="infoDiv">
+          <p>
+            <span>姓&emsp;&emsp;名：</span>
+            <span>{{selectNode.personName}}</span>
+          </p>
+          <p>
+            <span>编&emsp;&emsp;号：</span>
+            <span>{{selectNode.personCode}}</span>
+          </p>
+          <p>
+            <span>年&emsp;&emsp;龄：</span>
+            <span>{{selectNode.age}}</span>
+          </p>
+          <p>
+            <span>性&emsp;&emsp;别：</span>
+            <span>{{selectNode.sex ? '男' : '女'}}</span>
+          </p>
+          <p>
+            <span>监&nbsp;仓&nbsp;&nbsp;号：</span>
+            <span>{{selectNode.departmentName}}</span>
+          </p>
+          <p>
+            <span>收押日期：</span>
+            <span>{{selectNode.createTime}}</span>
+          </p>
+          <p>
+            <span>入所原因：</span>
+            <span>{{selectNode.prisonCause}}</span>
+          </p>
+          <p>
+            <span>心&emsp;&emsp;率：</span>
+            <span>{{selectNode.heartRate}}</span>
+          </p>
+          <p>
+            <span>血&emsp;&emsp;压：</span>
+            <span> </span>
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="popup warnPopup">
+      <a href="javascript:" class="closeBtn"></a>
+      <!--
+            <div class="swiper-container warnSwiper">
+              <div class="swiper-wrapper">
+                <div class="swiper-slide" v-for="e in alarms">
+                  <p class="descript"><i class="warn"></i>{{e.personName}}({{e.personCode}}){{e.msg}}</p>
+                  <p class="time">{{formatDate(e.timestamp)}}</p>
+                  &lt;!&ndash;<a href="javascript:" class="viewBtn">查看视频</a>&ndash;&gt;
+                </div>
+                &lt;!&ndash;<div class="swiper-slide">&ndash;&gt;
+                &lt;!&ndash;<p class="descript"><i class="warn"></i>钟晓明(626532)违规离开监仓59</p>&ndash;&gt;
+                &lt;!&ndash;<p class="time">2018-07-18 17:53:50</p>&ndash;&gt;
+                &lt;!&ndash;<a href="javascript:" class="viewBtn">查看视频</a>&ndash;&gt;
+                &lt;!&ndash;</div>&ndash;&gt;
+                &lt;!&ndash;<div class="swiper-slide">&ndash;&gt;
+                &lt;!&ndash;<p class="descript"><i class="warn"></i>钟晓明(626532)违规离开监仓59</p>&ndash;&gt;
+                &lt;!&ndash;<p class="time">2018-07-18 17:53:50</p>&ndash;&gt;
+                &lt;!&ndash;<a href="javascript:" class="viewBtn">查看视频</a>&ndash;&gt;
+                &lt;!&ndash;</div>&ndash;&gt;
+              </div>
+              <div class="swiper-button-prev warnSwiper-button-prev"></div>
+              <div class="swiper-button-next warnSwiper-button-next"></div>
+            </div>
+      -->
+      <a href="javascript:" class="switchBtn cutLeft" @click="prevWarn">&lt;</a>
+      <div class="warnItem">
+        <p class="descript"><i class="warn"></i>{{currAlarm.personName}}({{currAlarm.personCode}}){{currAlarm.msg}}</p>
+        <p class="time">{{formatDate(currAlarm.timestamp)}}</p>
+        <!--<a href="javascript:" class="viewBtn">查看视频</a>-->
+      </div>
+      <a href="javascript:" class="switchBtn cutRight" @click="nextWarn">&gt;</a>
+      <div class="pagination">{{showWarnIndex + 1}} / {{totalWarn}}</div>
+      <!--
+            <div class="swiper-pagination warnSwiper-pagination"></div>
+      -->
+      <div class="decorate"><img src="images/popupBottomBg.png" alt=""></div>
+    </div>
+  </div>
+</div>
+
+
+<script src="js/common.js"></script>
+<script src="js/pages/header.js"></script>
+<!-- 引入组件库 -->
+<script src="js/accside.realtime.js"></script>
+<script src="js/draggabilly.pkgd.min.js"></script>
+<script>
+
+var diTuCtx = null
+var ctx = null
+
+$(function () {
+
+  var warnSwiper = new Swiper('.warnSwiper', {
+    loop: true,
+    slidesPerView: 10,
+    pagination: {
+      el: '.warnSwiper-pagination',
+      type: 'fraction'
+    },
+    navigation: {
+      nextEl: '.warnSwiper-button-next',
+      prevEl: '.warnSwiper-button-prev'
+    }
+  })
+
+  diTuCtx = document.getElementById('area').getContext('2d')
+  ctx = document.getElementById('option').getContext('2d')
+
+})
+
+function zoomFn (obj) {
+  var zoom = parseInt(obj.style.zoom, 10) || 100
+  zoom += event.wheelDelta / 12
+  if (zoom > 0)
+    obj.style.zoom = zoom + '%'
+  return false
+}
+
+function printFance (ctx, fences, rateX, rateY) {
+  for (var i = 0; i < fences.length; i++) {
+    const points = JSON.parse(fences[i].points)
+    ctx.beginPath()
+    ctx.strokeStyle = '#00ff13'
+    ctx.lineWidth = 2
+    var x1, y1 = 0
+    var x, y = 0
+    for (var i = 0; i < points.length; i++) {
+      const d = points[i]
+      x = d.x * rateX
+      y = d.y * rateY
+      ctx.lineTo(x, y)
+      if (i == 0) {
+        x1 = x
+        y1 = y
+      }
+    }
+    ctx.lineTo(x1, y1)
+    ctx.fillStyle = 'rgba(255,255,255,.5)'
+    ctx.fill()
+    ctx.stroke()
+    ctx.closePath()
+  }
+}
+
+function printDitu (pic, fences, width, height, rateX, rateY, isShowFences) {
+  diTuCtx.clearRect(0, 0, width, height)
+  var img = new Image()
+  img.onload = function () {
+    diTuCtx.drawImage(img, 0, 0)
+    if (isShowFences) {
+      printFance(diTuCtx, fences, rateX, rateY)
+    }
+  }
+  img.src = pic
+}
+
+function printGuiji (ctx, points, width, height, rateX, rateY) {
+  ctx.clearRect(0, 0, width, height)
+
+  ctx.setLineDash([4, 4])
+  Object.keys(points).forEach(function (item, index) {
+    const lines = points[item]
+    ctx.strokeStyle = '#0000ff'
+    ctx.beginPath()
+
+    //ctx.lineCap = 'round'
+    var x, y = 0
+    for (var i = 0; i < lines.length; i++) {
+      const d = lines[i]
+      x = d.posX * rateX
+      y = d.posY * rateY
+      ctx.lineTo(x, y)
+
+    }
+    ctx.stroke()
+    ctx.closePath()
+
+    //ctx.strokeStyle = '#0000ff'
+    ctx.beginPath()
+    ctx.arc(x, y, 5, 0, 2 * Math.PI) // 圆点
+    ctx.fill()
+    ctx.fillText(item, x, y + 20)
+    ctx.closePath()
+  })
+
+//        if (isShowFences) {
+//            printFance(ctx, fences, rateX, rateY)
+//        }
+
+}
+
+function printPoints (ctx, persons, width, height, rateX, rateY, isShowName) {
+  ctx.clearRect(0, 0, width, height)
+
+  for (var i = 0; i < persons.length; i++) {
+    var d = persons[i]
+
+    if (d.personCode == monitor.selectNode.personCode) {
+      monitor.selectNode.heartRate = d.heartRate
+    }
+
+    const x = d.posX * rateX
+    const y = d.posY * rateY
+
+    ctx.beginPath()
+    ctx.arc(x, y, 5, 0, 2 * Math.PI) // 圆点
+    ctx.fillStyle = '#0000ff'
+    ctx.fill()
+    ctx.font = '14px Airal'
+    ctx.textAlign = 'center'
+    var text = d.personName
+    //ctx.fillText(text, d.posX * 50, d.posY * 50 + 20)
+    if (isShowName) {
+      ctx.fillText(text, x, y + 20)
+    }
+    ctx.stroke()
+  }
+//        if (isShowFences) {
+//            printFance(ctx, fences, rateX, rateY)
+//        }
+}
+
+var monitor = new Vue({
+  el: '#monitor',
+  data: {
+    loading: false,
+    websocket: null,
+    alarmsSocket: null,
+    selectNode: {},
+    pic: 'images/floorPlan.png',
+    width: 1000,
+    height: 500,
+    rateX: 100,
+    rateY: 100,
+
+    filter: [],
+
+    points: {}, //轨迹点
+
+    fences: [],  //围栏
+
+    alarms: [
+      {
+        personName: '老汪',
+        personCode: '111',
+        msg: '告警信息告警信息告警信息告警信息告警信息告警信息告警信息告警信息告警信息告警信息告警信息告警信息告警信息告警信息告警信息告警信息告警信息告警信息'
+      },
+      {
+        personName: '老温',
+        personCode: '222',
+        msg: '告警信息222222222告警信息222222222告警信息222222222告警信息222222222告警信息222222222告警信息222222222告警信息222222222告警信息222222222'
+      },
+      {
+        personName: '老温',
+        personCode: '333',
+        msg: '告警信息333333333告警信息333333333告警信息333333333告警信息333333333告警信息333333333告警信息333333333告警信息333333333告警信息333333333'
+      }
+      ],
+    showWarnIndex: 0,
+    currAlarm: {
+      personName: '老汪',
+      personCode: '111',
+      msg: '告警信息告警信息告警信息告警信息告警信息告警信息告警信息告警信息告警信息告警信息告警信息告警信息告警信息告警信息告警信息告警信息告警信息告警信息'
+    }
+  },
+  computed: {
+    isToShowNodeInfo: function () {
+      return this.selectNode.personName !== undefined
+    },
+    isShowName: function () {
+      for (var i = 0; i < this.filter.length; i++) {
+        if (this.filter[i] == 1) return true
+      }
+      return false
+    },
+
+    isShowGuiji: function () {
+      for (var i = 0; i < this.filter.length; i++) {
+        if (this.filter[i] == 2) return true
+      }
+      return false
+    },
+
+    isShowFances: function () {
+      for (var i = 0; i < this.filter.length; i++) {
+        if (this.filter[i] == 3) return true
+      }
+      return false
+    },
+
+    totalWarn () {
+      return this.alarms.length
+    }
+  },
+  mounted: function () {
+    const that = this
+    if (userinfo.username != undefined && userinfo.username != '') {
+
+      POST(URLs.fences, {
+        page: 1,
+        listRows: 100
+      }).then(function (res) {
+        if (res.errcode !== 10001) {
+          alert(res.msg)
+        } else {
+          that.fences = res.data.result
+        }
+      }).catch(function (error) {
+        console.log(error)
+      })
+
+      POST(URLs.allFilesImg, {status: 1}).then(function (res) {
+        if (res.errcode !== 10001) {
+          alert(res.msg)
+        } else {
+          that.pic = res.data.result[0].path
+          that.width = res.data.result[0].picLength //+ 'px'
+          that.height = res.data.result[0].picWidth //+ 'px'
+
+          that.rateX = that.width / res.data.result[0].length
+          that.rateY = that.height / res.data.result[0].width
+
+          printDitu(res.data.result[0].path, that.fences, that.width, that.height, that.rateX, that.rateY, false)
+        }
+      }).catch(function (error) {
+        console.log(error)
+      })
+    }
+    console.log(this.alarms.length)
+  },
+  created: function () {
+    //页面刚进入时开启长连接
+    this.initWebSocket()
+  },
+  destroyed: function () {
+    //页面销毁时关闭长连接
+    this.websocketclose()
+  },
+  methods: {
+    formatDate: function (t) {
+      return moment(t).format('YYYY-MM-DD HH:mm:ss')
+    },
+
+    onfilter: function (e) {
+      printDitu(this.pic, this.fences, this.width, this.height, this.rateX, this.rateY, this.isShowFances)
+    },
+
+    initWebSocket: function () { //初始化weosocket
+
+      const wsuri = 'ws://qkwl.tpddns.cn:10006/coordinate/coors?query=123'//ws地址
+      this.websocket = new WebSocket(wsuri)
+      this.websocket.onopen = this.websocketonopen
+
+      this.websocket.onerror = this.websocketonerror
+
+      this.websocket.onmessage = this.websocketonmessage
+      this.websocket.onclose = this.websocketclose
+
+      const alarmsUri = 'ws://qkwl.tpddns.cn:10005/alarm/alarms'
+
+      this.alarmsSocket = new WebSocket(alarmsUri)
+      this.alarmsSocket.onopen = this.alarmsSocketonopen
+
+      this.alarmsSocket.onerror = this.alarmsSocketonerror
+
+      this.alarmsSocket.onmessage = this.alarmsSocketonmessage
+      this.alarmsSocket.onclose = this.alarmsSocketclose
+    },
+
+    websocketonopen: function () {
+      console.log('WebSocket连接成功')
+      this.websocket.send(JSON.stringify({type: 1, username: userinfo.username}))
+    },
+    websocketonerror: function (e) { //错误
+      console.log('WebSocket连接发生错误')
+    },
+    websocketonmessage: function (e) { //数据接收
+      const redata = JSON.parse(e.data)
+      //注意：长连接我们是后台直接1秒推送一条数据，
+      //但是点击某个列表时，会发送给后台一个标识，后台根据此标识返回相对应的数据，
+      //这个时候数据就只能从一个出口出，所以让后台加了一个键，例如键为1时，是每隔1秒推送的数据，为2时是发送标识后再推送的数据，以作区分
+      //console.log(redata, this.isShowName)
+
+      if (this.isShowGuiji) {
+        printGuiji(ctx, this.points, this.width, this.height, this.rateX, this.rateY)
+      } else {
+        printPoints(ctx, redata.data, this.width, this.height, this.rateX, this.rateY, this.isShowName)
+      }
+      const points = this.points
+      for (var i = 0; i < redata.data.length; i++) {
+        const p = redata.data[i]
+        const arr = points[p.personName] || []
+        if (arr.length > 60) {
+          arr.shift()
+        }
+        arr.push(p)
+        points[p.personName] = arr
+        this.points = points
+      }
+    },
+
+    websocketsend: function (agentData) {//数据发送
+      this.websocket.send(JSON.stringify({type: 1}))
+    },
+
+    websocketclose: function (e) { //关闭
+      console.log('connection closed (' + e.code + ')')
+    },
+
+    //*******************************************
+
+    alarmsSocketonopen: function () {
+      console.log('alarm webSocket连接成功')
+      this.alarmsSocket.send(JSON.stringify({type: 1, username: userinfo.username}))
+    },
+    alarmsSocketonerror: function (e) { //错误
+      console.log('WebSocket连接发生错误')
+    },
+    alarmsSocketonmessage: function (e) { //数据接收
+      const redata = JSON.parse(e.data)
+      console.log(redata)
+      const alarms = this.alarms
+      if (this.alarms >= 10) {
+        alarms.pop()
+      }
+      this.alarms = [].concat(redata.data).concat(alarms)
+      console.log(redata, '================数据接收=====================')
+    },
+
+    alarmsSocketsend: function (agentData) {//数据发送
+      console.log('=============1=========')
+      this.alarmsSocket.send(JSON.stringify({type: 1}))
+    },
+
+    alarmsSocketclose: function (e) { //关闭
+      console.log('connection closed (' + e.code + ')')
+    },
+
+    notShowNodeInfo () {
+      this.selectNode.personName = undefined
+    },
+
+    prevWarn () {
+      if (this.showWarnIndex > 0) {
+        --this.showWarnIndex
+        this.currAlarm = this.alarms[this.showWarnIndex]
+      }
+    },
+
+    nextWarn () {
+      if (this.showWarnIndex < (this.alarms.length - 1)) {
+        ++this.showWarnIndex
+        this.currAlarm = this.alarms[this.showWarnIndex]
+      }
+    }
+  }
+})
+
+</script>
+</body>
+</html>

@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>策略管理</title>
+    <link rel="stylesheet" href="css/element-ui/index.css">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/systemManage_dmManage.css">
+</head>
+<body>
+<div id="wrap">
+    <canvas id="space"><a href="javascript:" id="warp" style="display: none;">WARP SPEED</a></canvas>
+
+    <div id="fixed-top">
+        <a href="javascript:" class="logo fl"><img src="images/commonLogo.png" alt=""></a>
+        <div class="fixed-top-nav fl">
+            <ul class="clf">
+                <li v-for="item in menus" :class="[currPath == item.path? 'active' : '',  item.css]"><a
+                        :href="item.path"><span
+                        v-text="item.desc"></span></a></li>
+            </ul>
+        </div>
+        <div class="fixed-top-operate fr">
+            <div><a href="message.html"><img src="images/nav_iconEmail.png" alt=""></a></div>
+            <div>
+                <el-badge :value="amount" class="item">
+                    <a href="alarmHistoryData.html"><img width="40" src="images/nav_iconWarn.png" alt=""></a>
+                </el-badge>
+            </div>
+            <div>
+                <a href="javascript:"><img src="images/nav_iconUser.png" alt=""></a>
+                <div class="subMenu">
+                    <ul>
+                        <li><a href="changePassword.html">修改密码</a></li>
+                        <li><a href="javascript:void(0)" @click="logout">退出登录</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="fixed-side">
+        <div class="systemManage-nav">
+            <ul>
+                <li>
+                    <a href="systemManage_peopleManage.html">人员管理</a>
+                    <div>
+                        <a href="systemManage_peopleManage.html">人员管理</a>
+                        <a href="systemManage_organizeManage.html">组织管理</a>
+                    </div>
+                </li>
+                <li><a href="systemManage_areaManage.html">区域管理</a></li>
+                <li class="active">
+                    <a href="systemManage_tacticsManage.html">策略管理</a>
+                    <div>
+                        <a href="systemManage_tacticsManage.html">围栏策略</a>
+                        <a href="systemManage_dmManage.html" class="active">点名策略</a>
+                        <a href="systemManage_kqManage.html">考勤策略</a>
+                    </div>
+                </li>
+                <li>
+                    <a href="systemManage_equManage.html">设备管理</a>
+                    <div>
+                        <a href="systemManage_equManage.html">设备升级</a>
+                    </div>
+                </li>
+                <li>
+                    <a href="systemManage_wjManage.html">文件管理</a>
+                    <div>
+                        <a href="systemManage_wjManage.html">地图管理</a>
+                        <a href="systemManage_wjManage_bb.html">版本管理</a>
+                    </div>
+                </li>
+                <li><a href="javascript:">二次开发</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="fixed-main-wrap">
+        <div id="abs-level3menu"></div>
+        <div id="abs-main">
+            <div class="rsect">
+                <div class="nav-t clf">
+                    <div class="searchDiv">
+                        <input type="search" title="" placeholder="请输入姓名" v-model="search">
+                        <button class="searchBtn" @click="getStrategyList(1)"><i
+                                class="iconfont icon-xingtaiduICON_sousuo--"></i></button>
+                    </div>
+                    <a href="javascript:" @click="batchDelete">批量删除</a>
+                    <a href="javascript:" @click="showAddPop">+新增策略</a>
+                </div>
+                <div class="tab">
+                    <span class="line"></span>
+                    <table>
+                        <tr class="fst">
+                            <th><input type="checkbox"></th>
+                            <th>序号</th>
+                            <th>策略名</th>
+                            <th>区域名</th>
+                            <th>监仓</th>
+                            <th>生效时间</th>
+                            <th>周期</th>
+                            <th>操作</th>
+                        </tr>
+                        <tr v-for="(item, index) in dmList">
+                            <td><input type="checkbox" :value="item.callStrategyId" v-model="batchDeleteSet"></td>
+                            <td>{{(currPage-1)*10 + index+1}}</td>
+                            <td>{{item.callStrategyName}}</td>
+                            <td>{{item.fenceName}}</td>
+                            <td>{{item.departmentName}}</td>
+                            <td>{{item.callPeriod}}</td>
+                            <td>{{item.autoCallCycle}}分钟</td>
+                            <td>
+                <span>OFF <input class="switch switch-anim" type="checkbox" :checked="item.callStrategyStatus==1"
+                                 @change="switchStrategy" :value="item.callStrategyId"> ON</span>
+                                <a href="javascript:" class="edit" @click="showEditPop(item)"><i
+                                        class="iconfont icon-bianji"></i></a>
+                                <a href="javascript:" class="delete" @click="deleteStrategy([item.callStrategyId])"><i
+                                        class="iconfont icon-delete"></i></a>
+                            </td>
+                        </tr>
+                    </table>
+                    <span class="line"></span>
+                </div>
+                <div class="paging">
+                    <span class="total">共{{totalRows}}条</span>
+                    <a href="javascript:" class="btn_prev" @click="pre"><i class="iconfont icon-xiangzuoanniu"></i></a>
+                    <span :class="n==currPage?'number':''" v-for="n in totalPages" v-if="currPage-3<n && n < currPage+3"
+                          @click="getStrategyList(n)"><a href="javascript:">{{n}}</a></span>
+                    <a href="javascript:" class="btn_next" @click="post"><i
+                            class="iconfont icon-xiangzuoanniu1"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="layer" v-if="isShow">
+    <div id="addTactics" class="popup">
+        <a href="javascript:" class="closeBtn1" @click="cancel"><i class="iconfont icon-guanbi"></i></a>
+        <div class="bg1"></div>
+        <div class="bg2"></div>
+        <div class="clf">
+            <div class="list-title fl"><span>{{popupTitle}}</span></div>
+            <div class="listnav-r fr">
+                <a href="#" class="qd fl" @click="addTacticsFn" v-if="toAdd">确定</a>
+                <a href="#" class="qd fl" @click="editTacticsFn" v-if="toEdit">确定</a>
+                <a href="javascript:" class="qx fl cancelBtn" @click="cancel">取消</a>
+            </div>
+        </div>
+        <div class="sect">
+            <div>
+                <span class="red" v-if="toAdd">*</span><span>策略名称</span><input type="text"
+                                                                               v-model="addTactic.callStrategyName"/>
+            </div>
+
+            <div>
+                <div class="fl">
+                    <span class="red" v-if="toAdd">*</span><span>监仓</span>
+                    <select title="" v-model="addTactic.departmentCode">
+                        <option v-for="item in departments" :value="item.departmentCode">{{item.departmentName}}
+                        </option>
+                    </select>
+                </div>
+                <div class="fr">
+                    <span class="red" v-if="toAdd">*</span><span>有效区域</span>
+                    <select value="请选择" v-model="addTactic.fenceCode">
+                        <option v-for="item in fencesList" :value="item.fenceCode">{{item.fenceName}}</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <div class="fl aal">
+
+                    <div class="fl">
+                        <span class="red fl" v-if="toAdd">*</span><span class="fl">点名时间</span>
+
+                        <el-time-select
+                                class="fr"
+                                v-model="addTactic.callPeriod1"
+                                :picker-options="{
+                                    start: '06:30',
+                                    step: '00:15',
+                                    end: '20:30'
+                                }"
+                                placeholder="选择时间">
+                        </el-time-select>
+                        <!--<input class="fr" type="time" v-model="addTactic.callPeriod1"/>-->
+                    </div>
+                    <span class="fl bl">~</span>
+                    <div class="fr">
+                        <el-time-select
+                                v-model="addTactic.callPeriod2"
+                                :picker-options="{
+                                    start: '06:30',
+                                    step: '00:15',
+                                    end: '20:30'
+                                }"
+                                placeholder="选择时间">
+                        </el-time-select>
+
+                        <!--<input class="fl" type="time" v-model="addTactic.callPeriod2"/>-->
+                    </div>
+
+                </div>
+            </div>
+            <div>
+                <div class="fl"><span class="red" v-if="toAdd">*</span><span>点名周期</span>
+                    <input class="sj" type="number" value="30" v-model="addTactic.autoCallCycle"/></div>
+            </div>
+
+            <!--
+                <div class="b-nav">
+                  <ul>
+                    <li><span class="red">*</span><span style="letter-spacing:16px;">重复</span></li>
+                    <li><input type="checkbox"  v-model="addTactic.timeValues" value="1"><span>周一</span></li>
+                    <li><input type="checkbox"  v-model="addTactic.timeValues" value="2"><span>周二</span></li>
+                    <li><input type="checkbox"  v-model="addTactic.timeValues" value="3"><span>周三</span></li>
+                    <li><input type="checkbox"  v-model="addTactic.timeValues" value="4"><span>周四</span></li>
+                    <li><input type="checkbox"  v-model="addTactic.timeValues" value="5"><span>周五</span></li>
+                    <li><input type="checkbox"  v-model="addTactic.timeValues" value="6"><span>周六</span></li>
+                    <li><input type="checkbox"  v-model="addTactic.timeValues" value="0"><span>周日</span></li>
+                  </ul>
+                </div>
+            -->
+            <div><span>策略描述</span><input class="ms" type="text" v-model="addTactic.remark"></div>
+        </div>
+    </div>
+</div>
+<!--<div id="layer1"></div>-->
+<div id="prompt">
+    <div class="prompt-bg">
+        <a href="javascript:" class="closex"><i class="iconfont icon-guanbi"></i></a>
+        <p class="p-title">温馨提示</p>
+        <p class="p-text">您所编辑的数据尚未保存，确认退出？</p>
+        <div class="probut clf">
+            <a href="javascript:" class="pqr fl">确认</a>
+            <a href="javascript:" class="pqx fl">取消</a>
+        </div>
+    </div>
+</div>
+<script src="js/loadcommonjs.js"></script>
+<script src="js/common.js"></script>
+<script src="js/pages/header.js"></script>
+<script>
+
+    var dmStrategyList = new Vue({
+        el: '#fixed-main-wrap',
+        data: {
+            dmList: [],
+            search: '',
+            batchDeleteSet: [],
+            currPage: 1,
+            totalRows: 0,
+        },
+        computed: {
+            totalPages: function () {
+                return Math.ceil(this.totalRows / 10)
+            }
+        },
+        mounted: function () {
+            this.getStrategyList(1);
+        },
+        methods: {
+            pre: function () {
+                if (this.currPage > 1) {
+                    this.getStrategyList(this.currPage - 1)
+                }
+            },
+            post: function () {
+                if (this.currPage < Math.ceil(this.totalRows / 10)) {
+                    this.getStrategyList(this.currPage + 1)
+                }
+            },
+            getStrategyList: function (currPage) {
+                const that = this;
+                that.currPage = currPage;
+                POST(URLs.call_list, {
+                    page: currPage || 1,
+                    listRows: 10,
+                    personName: this.search,
+                }).then(function (res) {
+                    console.log(res.data)
+                    if (res.errcode !== 10001) {
+                        that.$message({
+                            message: res.msg,
+                            type: 'error'
+                        });
+                    } else {
+                        that.dmList = res.data.result;
+                        that.totalRows = res.data.totalRows;
+                    }
+                }).catch(function (error) {
+                    console.log(error);
+                });
+            },
+
+            selectAll: function (e) {
+                if (e.target.checked) {
+                    this.batchDeleteSet = this.dmList.map(e => e.callStrategyId);
+                } else {
+                    this.batchDeleteSet = []
+                }
+            },
+
+            batchDelete: function () {
+                this.deleteStrategy(this.batchDeleteSet)
+            },
+
+            showAddPop: function () {
+                console.log('================', tactics, tactics.toAdd);
+                tactics.toAdd = true;
+                tactics.popupTitle = '点名策略';
+                tactics.addTactic = {};
+            },
+
+            showEditPop: function (item) {
+                console.log('================',item,  tactics, tactics.toAdd);
+                tactics.toEdit = true;
+                tactics.popupTitle = '修改点名策略信息';
+                tactics.addTactic = JSON.parse(JSON.stringify(item));
+                const periods = tactics.addTactic.callPeriod.split("-");
+                tactics.addTactic.callPeriod1 = periods[0]
+                tactics.addTactic.callPeriod2 = periods[1]
+            },
+
+            deleteStrategy: function (list) {
+                const that = this;
+                POST(URLs.call_delete, {deleteIdList: list}).then(function (res) {
+                    if (res.errcode !== 10001) {
+                        that.$message({
+                            message: res.msg,
+                            type: 'error'
+                        });
+                    } else {
+                        dmStrategyList.getStrategyList(1)
+                    }
+                }).catch(function (error) {
+                    console.log(error);
+                });
+            },
+
+            switchStrategy: function (e) {
+                const that = this;
+                console.log('================', e, e.target.checked, e.target.value);
+                POST(URLs.call_switch, {
+                    callStrategyId: parseInt(e.target.value),
+                    callStrategyStatus: e.target.checked ? 1 : 0
+                }).then(function (res) {
+                    if (res.errcode !== 10001) {
+                        that.$message({
+                            message: res.msg,
+                            type: 'error'
+                        });
+                    }
+                }).catch(function (error) {
+                    console.log(error);
+                });
+            },
+        }
+    });
+
+
+    var tactics = new Vue({
+        el: '#layer',
+        data: {
+            toAdd: false,
+            toEdit: false,
+            departments: [],
+            fencesList: [],
+            addTactic: {
+                callStrategyName: '',
+                departmentCode: '',
+                fenceCode: '',
+                callPeriod: '',
+                autoCallCycle: 0,
+                username: userinfo.username,
+                remark: ''
+            }
+        },
+        computed: {
+            isShow: function () {
+                console.log('=====================', this.toAdd, this.toEdit, this.addTactic.timeValues);
+                return this.toAdd || this.toEdit
+            }
+        },
+        mounted: function () {
+            this.getDepartments();
+            this.getFencesList();
+        },
+        methods: {
+            cancel: function () {
+                this.toAdd = false;
+                this.toEdit = false;
+            },
+            addTacticsFn: function () {
+                const that = this;
+                const addObj = this.addTactic;
+                addObj.autoCallCycle = parseInt(addObj.autoCallCycle);
+                addObj.callPeriod = (this.addTactic.callPeriod1 || "") + "-" + (this.addTactic.callPeriod2 || "");
+                POST(URLs.call_add, addObj).then(function (res) {
+                    if (res.errcode !== 10001) {
+                        that.$message({
+                            message: res.msg,
+                            type: 'error'
+                        });
+                    } else {
+                        console.log('=============', res.data);
+                        that.toAdd = false;
+                        dmStrategyList.getStrategyList(1)
+                    }
+                }).catch(function (error) {
+                    console.log(error);
+                });
+            },
+
+            getDepartments: function () {
+                const that = this;
+                POST(URLs.leafDepartmentList, {}).then(function (res) {
+                    if (res.errcode !== 10001) {
+                        that.$message({
+                            message: res.msg,
+                            type: 'error'
+                        });
+                    } else {
+                        console.log('=============', res.data);
+                        that.departments = res.data;
+                    }
+                }).catch(function (error) {
+                    console.log(error);
+                });
+            },
+
+            getFencesList: function () {
+                const that = this;
+                POST(URLs.fences, {
+                    page: 1,
+                    listRows: 100,
+                }).then(function (res) {
+                    if (res.errcode !== 10001) {
+                        that.$message({
+                            message: res.msg,
+                            type: 'error'
+                        });
+                    } else {
+                        that.fencesList = res.data.result;
+                    }
+                }).catch(function (error) {
+                    console.log(error);
+                });
+            },
+
+            editTacticsFn: function () {
+                const that = this;
+                const addObj = this.addTactic;
+                addObj.autoCallCycle = parseInt(addObj.autoCallCycle);
+                addObj.callPeriod = (this.addTactic.callPeriod1 || "") + "~" + (this.addTactic.callPeriod2 || "");
+                POST(URLs.call_update, addObj).then(function (res) {
+                    if (res.errcode !== 10001) {
+                        that.$message({
+                            message: res.msg,
+                            type: 'error'
+                        });
+                    } else {
+                        console.log('=============', res.data);
+                        that.toEdit = false;
+                        dmStrategyList.getStrategyList(1)
+                    }
+                }).catch(function (error) {
+                    console.log(error);
+                });
+            },
+        }
+    });
+
+
+</script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+
+#abs-main{padding-top: 3.5rem;}
+
+.floorPlanDiv{position: relative;}
+.floorPlan{display: block;max-width: 100%;}
+
+.chartDiv-row{padding: 0 0 3.5rem;width: 85%;margin: auto;}
+.chartDiv-row:after{content: '';display: block;clear: both;}
+.chartDiv-col{float: left;width: 50%;padding: 0 2%;}
+.chartDiv-cel{width: 100%;height: 17.375rem;margin: auto;background: url("../images/chartDivBg.png") no-repeat center/100% 100%;padding-top: 3.8rem;position: relative;}
+.chartDiv-cel > .chartTitle{position: absolute;top: 0;left: 0;right: 0;text-align: center;line-height: 3.8rem;font-size: 1rem;color: #abd7ef;font-weight: bold;}
+
+.chartDiv-cel > .chartTitle .switchTab{position: absolute;right: 1rem;top: 100%;width: 6rem;height: 2rem;border: 1px solid #fff;z-index: 1;border-radius: .3rem;}
+.chartDiv-cel > .chartTitle .switchTab:after{content: '';display: table;clear: both;}
+
+.chartDiv-cel > .chartTitle .switchTab span{float: left;width: 50%;height: 100%;line-height: 1.8rem;font-size: .9rem;color: #fff;cursor: pointer;}
+.chartDiv-cel > .chartTitle .switchTab span.selected{background-color: #fff;color: #1A3D4D;}
+
+.echart{height: 100%;}
+
+
+
+
+
+
+
+
+
+
+
+
+

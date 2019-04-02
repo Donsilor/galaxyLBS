@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>考勤管理</title>
+  <link rel="stylesheet" href="css/element-ui/index.css">
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/callTheRoll.css">
+  <script src="js/loadcommonjs.js"></script>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="space"><a href="javascript:" id="warp" style="display: none;">WARP SPEED</a></canvas>
+
+  <div id="fixed-top">
+    <a href="javascript:" class="logo fl"><img src="images/commonLogo.png" alt=""></a>
+    <div class="fixed-top-nav fl">
+      <ul class="clf">
+        <li v-for="item in menus" :class="[currPath == item.path? 'active' : '',  item.css]"><a :href="item.path"><span
+          v-text="item.desc"></span></a></li>
+      </ul>
+    </div>
+    <div class="fixed-top-operate fr">
+      <div><a href="message.html"><img src="images/nav_iconEmail.png" alt=""></a></div>
+      <div>
+        <el-badge :value="amount" class="item">
+          <a href="alarmHistoryData.html"><img width="40" src="images/nav_iconWarn.png" alt=""></a>
+        </el-badge>
+      </div>
+      <div>
+        <a href="javascript:"><img src="images/nav_iconUser.png" alt=""></a>
+        <div class="subMenu">
+          <ul>
+            <li><a href="changePassword.html">修改密码</a></li>
+            <li><a href="javascript:void(0)" @click="logout">退出登录</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="fixed-side">
+    <div class="fixed-side-nav">
+      <el-input
+        placeholder="输入关键字进行过滤"
+        v-model="filterText">
+      </el-input>
+
+      <el-tree
+        class="filter-tree"
+        :data="organization"
+        :props="defaultProps"
+        node-key="id"
+        show-checkbox
+        highlight-current
+        :default-checked-keys="defaultCheckedKeys"
+        :default-expanded-keys="defaultExpandedKeys"
+        :filter-node-method="filterNode"
+        @check="checkChange"
+        ref="tree2">
+      </el-tree>
+      <a href="javascript:" class="toggleBtn unfold"></a>
+    </div>
+    <div id="tempDisarm" class="tempDisarm show">
+      <div class="headline">
+        <b>临时撤防</b>
+        <a href="javascript:" class="toggleBtn show"></a>
+      </div>
+      <div class="editDiv">
+        <div class="subTitle">撤防原因</div>
+
+        <!--<span v-for="e in disarmingList">-->
+        <!--<input type="checkbox" :id="e.disarmingId" v-model="disarmingIdList"  hidden :value="e.disarmingId" >-->
+        <!--<label :for="e.disarmingId" >{{e.disarmingName}}</label>-->
+        <!--</span>-->
+
+        <div class="options clf">
+          <label v-for="e in disarmingList">
+            <input type="radio" :id="e.disarmingId" v-model="disarmingId" :value="e.disarmingId" hidden>
+            <span>{{e.disarmingName}}</span>
+          </label>
+        </div>
+        <div class="subTitle">撤防时长</div>
+        <div class="options clf">
+          <label v-for="item in disarmingTimeOptions">
+            <input type="radio" :id="item.key" v-model="duration" hidden :value="item.value">
+            <span>{{item.key}}</span>
+          </label>
+          <el-date-picker
+            v-model="startTime"
+            type="date"
+            placeholder="开始时间"
+            align="right"
+            default-value=""
+            size="mini">
+          </el-date-picker>
+          <!--<span>~</span>-->
+          <el-date-picker
+            v-model="endTime"
+            type="date"
+            placeholder="结束时间"
+            align="right"
+            default-value=""
+            size="mini">
+          </el-date-picker>
+          <!--<input type="text" class="time" placeholder="开始时间"><span>~</span>-->
+          <!--<input type="text" class="time" placeholder="结束时间">-->
+        </div>
+        <a href="javascript:" class="confirmBtn" @click="addDisarmingList">确定</a>
+        <a href="cfRecord.html" class="viewRecord">查看撤防记录</a>
+      </div>
+    </div>
+  </div>
+  <div id="fixed-main-wrap">
+    <div id="abs-level3menu"></div>
+    <div id="abs-main">
+      <div class="chartDiv-row" v-for="(x, i) in chartList">
+        <div class="chartDiv-col" v-for="(y, j) in x">
+          <div class="chartDiv-cel">
+            <div class="chartTitle">{{y.departmentName}}</div>
+            <div :id="y.departmentCode" class="echart" @click="linkTo(y.departmentCode)"></div>
+            <div class="dataDiv">
+              <div class="dataDivTop">
+                <p>应到：{{y.totalNumber}}人</p>
+                <p>实到：{{y.actualNumber}}人</p>
+                <p>缺勤：{{y.absenceNumber}}人</p>
+              </div>
+              <div class="dataDivBot">
+                <p v-for="m in y.absenceList">{{m.absenceName}}：{{m.absenceNumber}}人</p>
+                <!--<p>看病：1人（谢超雄）</p>-->
+                <!--<p>留仓：1人（刘中山）</p>-->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="js/echarts.min.js"></script>
+<script src="js/common.js"></script>
+<script src="js/pages/header.js"></script>
+<script src="js/accside.callThreRoll.js"></script>
+<script>
+
+function setOption (id, actualNumber, absenceNumber) {
+  var jc58 = echarts.init(document.getElementById(id))
+  jc58.setOption({
+    series: {
+      name: '比例',
+      type: 'pie',
+      radius: '75%',
+      center: ['50%', '50%'],
+      itemStyle: {
+        normal: {
+          label: {
+            show: true,
+            position: 'inside',
+            color: '#fff'//隐藏标示文字
+          },
+          labelLine: {
+            show: false   //隐藏标示线
+          }
+        }
+      },
+      data: [
+        {value: actualNumber, name: '实到:' + actualNumber, itemStyle: {color: '#91c7af'}},
+        {value: absenceNumber, name: '缺勤:' + absenceNumber, itemStyle: {color: '#c33531'}}
+      ]
+    }
+  })
+}
+
+$(function () {
+
+  var tempDisarm = $('#tempDisarm')
+  var tempDisarmToggleBtn = $('#tempDisarm .toggleBtn')
+  tempDisarmToggleBtn.on('click', function () {
+    if (tempDisarm.hasClass('show')) {
+      tempDisarm.removeClass('show')
+      tempDisarmToggleBtn.removeClass('show')
+    } else {
+      tempDisarm.addClass('show')
+      tempDisarmToggleBtn.addClass('show')
+    }
+  })
+
+//        var jc58 = echarts.init(document.getElementById('jc58'));
+//        jc58.setOption({
+//            series: {
+//                name: '比例',
+//                type: 'pie',
+//                radius: '75%',
+//                center: ['50%', '50%'],
+//                itemStyle: {
+//                    normal: {
+//                        label: {
+//                            show: true,
+//                            position: 'inside',
+//                            color: '#fff'//隐藏标示文字
+//                        },
+//                        labelLine: {
+//                            show: false   //隐藏标示线
+//                        }
+//                    }
+//                },
+//                data: [
+//                    {value: 12, name: '实到:12', itemStyle: {color: '#91c7af'}},
+//                    {value: 3, name: '缺勤:3', itemStyle: {color: '#c33531'}}
+//                ]
+//
+//            }
+//        });
+
+  var ECHART = $('.echart')
+  ECHART.on('click', function () {
+    $(location).attr('pathname', '/cfRecord.html')
+  })
+
+})
+
+var monitor = new Vue({
+  el: '#fixed-main-wrap',
+  data: {
+    loading: false,
+    realTimeCall: {},
+    chartList: []
+  },
+  mounted: function () {
+    this.getCallRealTimeCall()
+  },
+  methods: {
+    linkTo: function (param) {
+      top.location.href = 'cfRecord.html'
+    },
+
+    getCallRealTimeCall: function () {
+      const that = this
+      POST(URLs.call_realTimeCall, {username: userinfo.username}).then(function (res) {
+        if (res.errcode !== 10001) {
+          alert(res.msg)
+        } else {
+          const d = res.data.realTimeCallDTOList
+          console.log(res.data, d, '=====================================')
+          for (var i = 0; i < d.length; i += 2) {
+            console.log('=========', i, i + 1)
+            if (d.length - i == 1) {
+              that.chartList.push([d[i]])
+            } else {
+              that.chartList.push([d[i], d[i + 1]])
+            }
+          }
+          that.recordTimeCall = res.data
+          console.log('============', d, that.chartList)
+          //that.chartList = res.data.realTimeCallDTOList;
+
+          setTimeout(function () {
+            for (var i = 0; i < d.length; i++) {
+              setOption(d[i].departmentCode, d[i].actualNumber, d[i].absenceNumber)
+            }
+          }, 1000)
+        }
+      }).catch(function (error) {
+        console.log(error)
+      })
+    }
+  }
+})
+
+
+</script>
+</body>
+</html>

@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>策略管理</title>
+  <link rel="stylesheet" href="css/element-ui/index.css">
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/systemManage_tacticsManage.css">
+  <script src="js/loadcommonjs.js"></script>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="space"><a href="javascript:" id="warp" style="display: none;">WARP SPEED</a></canvas>
+
+  <div id="fixed-top">
+    <a href="javascript:" class="logo fl"><img src="images/commonLogo.png" alt=""></a>
+    <div class="fixed-top-nav fl">
+      <ul class="clf">
+        <li v-for="item in menus" :class="[currPath == item.path? 'active' : '',  item.css]"><a :href="item.path"><span
+          v-text="item.desc"></span></a></li>
+      </ul>
+    </div>
+    <div class="fixed-top-operate fr">
+      <div><a href="message.html"><img src="images/nav_iconEmail.png" alt=""></a></div>
+      <div>
+        <el-badge :value="amount" class="item">
+          <a href="alarmHistoryData.html"><img width="40" src="images/nav_iconWarn.png" alt=""></a>
+        </el-badge>
+      </div>
+      <div>
+        <a href="javascript:"><img src="images/nav_iconUser.png" alt=""></a>
+        <div class="subMenu">
+          <ul>
+            <li><a href="changePassword.html">修改密码</a></li>
+            <li><a href="javascript:void(0)" @click="logout">退出登录</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="fixed-side">
+    <div class="systemManage-nav">
+      <ul>
+        <li>
+          <a href="systemManage_peopleManage.html">人员管理</a>
+          <div>
+            <a href="systemManage_peopleManage.html">人员管理</a>
+            <a href="systemManage_organizeManage.html">组织管理</a>
+          </div>
+        </li>
+        <li><a href="systemManage_areaManage.html">区域管理</a></li>
+        <li class="active">
+          <a href="systemManage_tacticsManage.html">策略管理</a>
+          <div>
+            <a href="systemManage_tacticsManage.html" class="active">围栏策略</a>
+            <a href="systemManage_dmManage.html">点名策略</a>
+            <a href="systemManage_kqManage.html">考勤策略</a>
+          </div>
+        </li>
+        <li>
+          <a href="systemManage_equManage.html">设备管理</a>
+          <div>
+            <a href="systemManage_equManage.html">设备升级</a>
+          </div>
+        </li>
+        <li>
+          <a href="systemManage_wjManage.html">文件管理</a>
+          <div>
+            <a href="systemManage_wjManage.html">地图管理</a>
+            <a href="systemManage_wjManage_bb.html">版本管理</a>
+          </div>
+        </li>
+        <li><a href="javascript:">二次开发</a></li>
+      </ul>
+    </div>
+  </div>
+  <div id="fixed-main-wrap">
+    <div id="abs-level3menu"></div>
+    <div id="abs-main">
+      <div class="rsect">
+        <div class="nav-t clf">
+          <div class="searchDiv">
+            <input type="search" title="" placeholder="请输入姓名" v-model="search">
+            <button class="searchBtn" @click="getStrategyList(1)"><i
+              class="iconfont icon-xingtaiduICON_sousuo--"></i></button>
+          </div>
+          <a href="javascript:" @click="batchDelete">批量删除</a>
+          <a href="javascript:" @click="showAddPop">+新增策略</a>
+        </div>
+        <div class="tab">
+          <span class="line"></span>
+          <table>
+            <tr class="fst">
+              <th><input type="checkbox" @change="selectAll"></th>
+              <th>序号</th>
+              <th>策略名</th>
+              <th>区域名</th>
+              <th>关联用户</th>
+              <th>生效时间</th>
+              <th>告警级别</th>
+              <th>操作</th>
+            </tr>
+            <tr v-for="(item, index) in list">
+              <td><input type="checkbox" :value="item.strategyCode" v-model="batchDeleteSet"></td>
+              <td>{{(currPage-1)*10 + index+1}}</td>
+              <td>{{item.strategyName}}</td>
+              <td>{{item.fenceName}}</td>
+              <td>{{item.strategyUser}}</td>
+              <td>{{item.startTime}}-{{item.finishTime}}</td>
+              <td>{{item.level==0?'提示':(item.level==1?'普通':item.level==2?'严重':'')}}</td>
+              <td>
+                <span>OFF <input class="switch switch-anim" type="checkbox" :checked="item.available==1"
+                                                 @change="switchStrategy" :value="item.strategyCode"> ON</span>
+                <a href="javascript:" class="edit" @click="showEditPop(item)"><i class="iconfont icon-bianji"></i></a>
+                <a href="javascript:" class="delete" @click="deleteStrategy([item.strategyCode])"><i
+                  class="iconfont icon-delete"></i></a>
+              </td>
+            </tr>
+          </table>
+          <span class="line"></span>
+        </div>
+        <div class="paging">
+          <span class="total">共{{totalRows}}条</span>
+          <a href="javascript:" class="btn_prev" @click="pre"><i class="iconfont icon-xiangzuoanniu"></i></a>
+          <span :class="n==currPage?'number':''" v-for="n in totalPages" v-if="currPage-3<n && n < currPage+3"
+                @click="getStrategyList(n)"><a href="javascript:">{{n}}</a></span>
+          <a href="javascript:" class="btn_next" @click="post"><i
+            class="iconfont icon-xiangzuoanniu1"></i></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="layer" v-if="isShow">
+  <div id="addTactics" class="popup tacticsPopup">
+    <div class="bg1"></div>
+    <div class="bg2"></div>
+    <div class="clf">
+      <div class="list-title fl"><span>{{popupTitle}}</span></div>
+      <div class="listnav-r fr">
+        <a href="#" class="qd fl" @click="addTactics" v-if="toAdd">确定</a>
+        <a href="#" class="qd fl" @click="editTactics" v-if="toEdit">确定</a>
+        <a href="javascript:" class="qx fl cancelBtn" @click="cancel">取消</a>
+      </div>
+    </div>
+
+    <div class="sect">
+      <div>
+        <span class="red" v-if="toAdd">*</span><span>策略名称</span><input type="text" v-model="addTactic.strategyName"/>
+      </div>
+      <div>
+        <div class="fl">
+          <span class="red" v-if="toAdd">*</span><span>策略行为</span>
+          <select value="请选择" v-model="addTactic.forbidden">
+            <option value="0">禁止进入</option>
+            <option value="1">禁止离开</option>
+          </select>
+          <!--<input type="text" v-model="addTactic.fenceCode" :enabled="toEdit"/>-->
+        </div>
+        <div class="fr">
+          <span class="red" v-if="toAdd">*</span><span>告警级别</span>
+          <select value="请选择" v-model="addTactic.level">
+            <option value="0">提示</option>
+            <option value="1">普通</option>
+            <option value="2">严重</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <div class="fl">
+          <span class="red" v-if="toAdd">*</span><span>关联用户</span>
+          <!--<input type="text" v-model="addTactic.strategyUserId"/>-->
+          <select title="" v-model="addTactic.strategyUserId">
+            <option v-for="item in departments" :value="item.departmentCode">{{item.departmentName}}</option>
+          </select>
+        </div>
+        <div class="fr">
+          <span class="red" v-if="toAdd">*</span><span>有效区域</span>
+          <select value="请选择" v-model="addTactic.fenceCode">
+            <option v-for="item in fencesList" :value="item.fenceCode">{{item.fenceName}}</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <div class="fl">
+          <span class="red" v-if="toAdd">*</span><span>有效时间</span>
+          <input type="time" v-model="addTactic.startTime"/>
+        </div>
+        <div class="fr">
+          <input type="time" v-model="addTactic.finishTime"/>
+        </div>
+      </div>
+
+      <div class="b-nav">
+        <ul>
+          <li><span class="red" v-if="toAdd">*</span><span style="letter-spacing:16px;">重复</span></li>
+          <li><input type="checkbox" v-model="addTactic.timeValue" value="1"><span>周一</span></li>
+          <li><input type="checkbox" v-model="addTactic.timeValue" value="2"><span>周二</span></li>
+          <li><input type="checkbox" v-model="addTactic.timeValue" value="3"><span>周三</span></li>
+          <li><input type="checkbox" v-model="addTactic.timeValue" value="4"><span>周四</span></li>
+          <li><input type="checkbox" v-model="addTactic.timeValue" value="5"><span>周五</span></li>
+          <li><input type="checkbox" v-model="addTactic.timeValue" value="6"><span>周六</span></li>
+          <li><input type="checkbox" v-model="addTactic.timeValue" value="0"><span>周日</span></li>
+        </ul>
+      </div>
+      <div><span>策略描述</span><input class="ms" type="text" v-model="addTactic.remark"></div>
+    </div>
+  </div>
+</div>
+
+<script src="js/common.js"></script>
+<script src="js/pages/header.js"></script>
+<script>
+
+  var strategyList = new Vue({
+    el: '#fixed-main-wrap',
+    data: {
+      list: [],
+      search: '',
+      batchDeleteSet: [],
+      currPage: 1,
+      totalRows: 0,
+      popupTitle: ''
+    },
+    computed: {
+      totalPages: function () {
+        return Math.ceil(this.totalRows / 10)
+      }
+    },
+    methods: {
+      pre: function () {
+        if (this.currPage > 1) {
+          this.getStrategyList(this.currPage - 1)
+        }
+      },
+      post: function () {
+        if (this.currPage < Math.ceil(this.totalRows / 10)) {
+          this.getStrategyList(this.currPage + 1)
+        }
+      },
+      getStrategyList: function (currPage) {
+        const that = this;
+        that.currPage = currPage;
+        POST(URLs.strategyList, {
+          page: currPage || 1,
+          listRows: 10,
+          strategyName: this.search,
+        }).then(function (res) {
+          if (res.errcode !== 10001) {
+              that.$message({
+                  message: res.msg,
+                  type: 'error'
+              });
+          } else {
+            that.list = res.data.result;
+            that.totalRows = res.data.totalRows;
+          }
+        }).catch(function (error) {
+          console.log(error);
+        });
+      },
+
+      selectAll: function (e) {
+        if (e.target.checked) {
+          this.batchDeleteSet = this.list.map(e => e.strategyCode);
+        } else {
+          this.batchDeleteSet = []
+        }
+      },
+
+      batchDelete: function () {
+        this.deleteStrategy(this.batchDeleteSet)
+      },
+
+      showAddPop: function () {
+        console.log('================', tactics, tactics.toAdd);
+        tactics.toAdd = true;
+        tactics.popupTitle = '围栏策略';
+        tactics.addTactic = {forbidden: 0, timeValue: [],};
+      },
+
+      showEditPop: function (item) {
+        console.log('================', item, tactics.toAdd);
+        tactics.toEdit = true;
+        tactics.popupTitle = '修改围栏策略信息';
+        tactics.addTactic = JSON.parse(JSON.stringify(item));
+        tactics.addTactic.timeValue = item.timeValue.split(",");
+      },
+
+      deleteStrategy: function (list) {
+        const that = this;
+        POST(URLs.strategyDel, {strategyCodes: list}).then(function (res) {
+          if (res.errcode !== 10001) {
+              that.$message({
+                  message: res.msg,
+                  type: 'error'
+              });
+          } else {
+            strategyList.getStrategyList(1)
+          }
+        }).catch(function (error) {
+          console.log(error);
+        });
+      },
+
+      switchStrategy: function (e) {
+        const that = this;
+        console.log('================', e.target.checked, e.target.value);
+        POST(URLs.strategySwitch, {
+          strategyCode: e.target.value,
+          available: e.target.checked ? 1 : 0
+        }).then(function (res) {
+          if (res.errcode !== 10001) {
+              that.$message({
+                  message: res.msg,
+                  type: 'error'
+              });
+          }
+        }).catch(function (error) {
+          console.log(error);
+        });
+      },
+    }
+  });
+
+  strategyList.getStrategyList(1);
+
+  var tactics = new Vue({
+    el: '#layer',
+    data: {
+      toAdd: false,
+      toEdit: false,
+      departments: [],
+      fencesList: [],
+      addTactic: {
+        fenceCode: '',
+        finishTime: '',
+        level: 0,
+        strategyName: '',
+        startTime: '',
+        strategyUserId: '',
+        userType: 0,
+        timeValue: [],
+        forbidden: 0,
+        available: 1,
+      }
+    },
+    computed: {
+      isShow: function () {
+        return this.toAdd || this.toEdit
+      }
+    },
+    methods: {
+      cancel: function () {
+        this.toAdd = false;
+        this.toEdit = false;
+      },
+
+      getDepartments: function () {
+        const that = this;
+        POST(URLs.departments, {}).then(function (res) {
+          if (res.errcode !== 10001) {
+              that.$message({
+                  message: res.msg,
+                  type: 'error'
+              });
+          } else {
+            console.log('=============', res.data);
+            that.departments = res.data;
+          }
+        }).catch(function (error) {
+          console.log(error);
+        });
+      },
+
+      getFencesList: function () {
+        const that = this;
+        POST(URLs.fences, {
+          page: 1,
+          listRows: 100,
+        }).then(function (res) {
+          if (res.errcode !== 10001) {
+              that.$message({
+                  message: res.msg,
+                  type: 'error'
+              });
+          } else {
+            that.fencesList = res.data.result;
+          }
+        }).catch(function (error) {
+          console.log(error);
+        });
+      },
+
+
+      addTactics: function () {
+        const that = this;
+        const addObj = this.addTactic;
+        addObj.timeValue = addObj.timeValue.join(",");
+        POST(URLs.strategyAdd, addObj).then(function (res) {
+          if (res.errcode !== 10001) {
+              that.$message({
+                  message: res.msg,
+                  type: 'error'
+              });
+          } else {
+            console.log('=============', res.data);
+            that.toAdd = false;
+            strategyList.getStrategyList(1)
+          }
+        }).catch(function (error) {
+          console.log(error);
+        });
+      },
+
+      editTactics: function () {
+        const that = this;
+        const addObj = this.addTactic;
+        addObj.timeValue = addObj.timeValue.join(",");
+        POST(URLs.strategyModify, addObj).then(function (res) {
+          if (res.errcode !== 10001) {
+              that.$message({
+                  message: res.msg,
+                  type: 'error'
+              });
+          } else {
+            console.log('=============', res.data);
+            that.toEdit = false;
+            strategyList.getStrategyList(1)
+          }
+        }).catch(function (error) {
+          console.log(error);
+        });
+      },
+    }
+  });
+
+  tactics.getDepartments();
+  tactics.getFencesList();
+
+
+</script>
+</body>
+</html>

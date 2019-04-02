@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>考勤管理</title>
+  <link rel="stylesheet" href="css/element-ui/index.css">
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/kqManage.css">
+  <script src="js/loadcommonjs.js"></script>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="space"><a href="javascript:" id="warp" style="display: none;">WARP SPEED</a></canvas>
+
+  <div id="fixed-top">
+    <a href="javascript:" class="logo fl"><img src="images/commonLogo.png" alt=""></a>
+    <div class="fixed-top-nav fl">
+      <ul class="clf">
+        <li v-for="item in menus" :class="[currPath == item.path? 'active' : '',  item.css]"><a :href="item.path"><span
+          v-text="item.desc"></span></a></li>
+      </ul>
+    </div>
+    <div class="fixed-top-operate fr">
+      <div><a href="message.html"><img src="images/nav_iconEmail.png" alt=""></a></div>
+      <div>
+        <el-badge :value="amount" class="item">
+          <a href="alarmHistoryData.html"><img width="40" src="images/nav_iconWarn.png" alt=""></a>
+        </el-badge>
+      </div>
+      <div>
+        <a href="javascript:"><img src="images/nav_iconUser.png" alt=""></a>
+        <div class="subMenu">
+          <ul>
+            <li><a href="changePassword.html">修改密码</a></li>
+            <li><a href="javascript:void(0)" @click="logout">退出登录</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="fixed-side">
+    <div class="fixed-side-nav">
+      <el-input
+        placeholder="输入关键字进行过滤"
+        v-model="filterText">
+      </el-input>
+      <el-tree
+        class="filter-tree"
+        :data="organization"
+        :props="defaultProps"
+        node-key="id"
+        show-checkbox
+        highlight-current
+        :default-checked-keys="defaultCheckedKeys"
+        :default-expanded-keys="defaultExpandedKeys"
+        :filter-node-method="filterNode"
+        @check="checkChange"
+        ref="tree2">
+      </el-tree>
+      <a href="javascript:" class="toggleBtn unfold"></a>
+    </div>
+  </div>
+  <div id="fixed-main-wrap">
+    <div id="abs-level3menu"><span class="fl yf" v-text="recordTime">考勤统计</span><a class="fl prem" href="javascript:"
+                                                                                   @click="preMonth">上月</a><a
+      class="fl nextm" href="javascript:" @click="nextMonth">下月</a></div>
+    <div id="abs-main">
+      <div class="chartDiv-row">
+        <div class="chartDiv-col">
+          <div class="chartDiv-cel">
+            <div class="chartTitle">公司考勤</div>
+            <div id="onec" class="echart"></div>
+            <div class="dataDiv">
+              <!--<div v-for="item in monthAttendanceList" :class="{item.absenceName=='旷工'?'absent':item.absenceName=='迟到'?'casualLeave':'sickLeave'}"-->
+              <div v-for="item in monthAttendanceList"
+                   :class="{absent: item.absenceName=='旷工', casualLeave :item.absenceName=='迟到', sickLeave: item.absenceName=='病假', askLeave:item.absenceName=='调休' }"
+                   :style="{height: item.absencePercent + '%'}"><span>{{item.absenceName}}人天：{{item.absencePercent}}%（{{item.absenceNumber}}人天）</span>
+              </div>
+              <!--<div class="absent" style="height: 1.666%;"><span>旷工人天：0.009%（1人天）</span></div>-->
+              <!--<div class="casualLeave" style="height: 16.666%;"><span>事假人天：0.093%（10人天）</span></div>-->
+              <!--<div class="sickLeave" style="height: 31.666%;"><span>病假人天：1.77%（19人天）</span></div>-->
+              <!--<div class="askLeave" style="height: 50%;"><span>调休人天：2.79%（30人天）</span></div>-->
+            </div>
+          </div>
+        </div>
+        <div class="chartDiv-col">
+          <div class="chartDiv-cel">
+            <div class="chartTitle">部门出勤率</div>
+            <div id="twoec" class="echart" @click="linkTo"></div>
+          </div>
+        </div>
+      </div>
+      <div class="chartDiv-row">
+        <div class="chartDiv-col">
+          <div class="chartDiv-cel">
+            <div class="chartTitle">个人总工时</div>
+            <div id="thec" class="echart"></div>
+          </div>
+        </div>
+        <div class="chartDiv-col">
+          <div class="chartDiv-cel">
+            <div class="chartTitle">个人出勤率</div>
+            <div id="fourec" class="echart"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/echarts.min.js"></script>
+<script src="js/common.js"></script>
+<script src="js/pages/header.js"></script>
+<script src="js/accside.kqManage.js"></script>
+<script>
+function setOneEchart (monthAttendanceList) {
+  const arr = monthAttendanceList || []
+  var all = 0
+  var absence = 0
+  for (var i = 0; i < arr.length; i++) {
+    if (arr[i].absenceName == '全勤') {
+      all = arr[i].absenceNumber
+    } else {
+      absence += arr[i].absenceNumber
+    }
+  }
+  console.log('=================', all, absence)
+  var onec = echarts.init(document.getElementById('onec'))
+  onec.setOption({
+    tooltip: {
+      trigger: 'item',
+      formatter: '{b} :({d}%)<br />({c}人天)'
+    },
+
+    series: {
+      type: 'pie',
+      radius: '75%',
+      center: ['50%', '50%'],
+      itemStyle: {
+        normal: {
+          label: {
+            show: false,
+            position: 'inside',
+            color: '#fff'//隐藏标示文字
+          },
+          labelLine: {
+            show: false   //隐藏标示线
+          }
+        }
+      },
+      data: [
+        {value: absence, name: '缺勤人天', itemStyle: {color: '#c33531'}},
+        {value: all, name: '全勤人天', itemStyle: {color: '#91c7af'}}
+      ]
+    }
+  })
+}
+
+//departmentAttendanceRateList
+function setTwoEchart (departmentAttendanceRateList) {
+  const arr = departmentAttendanceRateList || []
+  var categoryArr = []
+  var valueArr = []
+  for (var i = 0; i < arr.length; i++) {
+    categoryArr.push(arr[i].departmentName)
+    valueArr.push(arr[i].attendanceRate)
+  }
+
+  var twoec = echarts.init(document.getElementById('twoec'))
+  twoec.setOption({
+    tooltip: {},
+    title: {
+      show: true,
+      text: 'Top10',
+      x: '90%',
+      y: '70%',
+      textStyle: {
+        color: '#fff',
+        fontSize: '14',
+        fontWeight: 'normal',
+        textAlign: 'left'
+      }
+    },
+    xAxis: {
+      type: 'category',
+      data: categoryArr,
+      splitLine: {
+        show: false
+      },
+      axisTick: {
+        show: false
+      },
+      axisLine: {
+        lineStyle: {
+          color: '#fff'
+        }
+      },
+      axisLabel: {
+        color: '#fff',
+        interval: 0,
+        rotate: 30,
+        fontSize: '10px'
+      }
+    },
+    yAxis: {
+      type: 'value',
+      splitLine: {
+        show: false
+      },
+      axisLine: {
+        lineStyle: {
+          color: '#fff'
+        }
+      },
+      axisLabel: {
+        color: '#fff',
+        formatter: '{value} %'
+      }
+    },
+    series: [{
+      type: 'bar',
+      data: valueArr,
+      barWidth: '20px',
+      itemStyle: {
+        normal: {
+          color: '#d38265',
+          label: {
+            show: true,
+            position: 'top',
+            textStyle: {
+              color: 'white'
+            }
+          }
+        }
+      }
+    }]
+  })
+}
+
+function setThreeEchart (monthWorkingTimeList) {
+  const arr = monthWorkingTimeList || []
+  var categoryArr = []
+  var valueArr = []
+  for (var i = 0; i < arr.length; i++) {
+    categoryArr.push(arr[i].personName)
+    valueArr.push(arr[i].attendanceTime)
+  }
+  console.log('=================', monthWorkingTimeList, categoryArr, valueArr)
+  var thec = echarts.init(document.getElementById('thec'))
+  thec.setOption({
+    tooltip: {},
+    title: {
+      show: true,
+      text: 'Top10',
+      x: '90%',
+      y: '70%',
+      textStyle: {
+        color: '#fff',
+        fontSize: '14',
+        fontWeight: 'normal',
+        textAlign: 'left'
+      }
+    },
+    xAxis: {
+      type: 'category',
+      data: categoryArr,
+      splitLine: {
+        show: false
+      },
+      axisLine: {
+        lineStyle: {
+          color: '#fff'
+        }
+      },
+      axisTick: {
+        show: false
+      },
+      axisLabel: {
+        color: '#fff',
+        interval: 0,
+        rotate: 30,
+        fontSize: '10px'
+      }
+    },
+    yAxis: {
+      type: 'value',
+      splitLine: {
+        show: false
+      },
+      axisLine: {
+        lineStyle: {
+          color: '#fff'
+        }
+      },
+      axisLabel: {
+        color: '#fff',
+        formatter: '{value} h'
+      }
+    },
+    series: [{
+      type: 'bar',
+      data: valueArr,
+      barWidth: '20px',
+      itemStyle: {
+        normal: {
+          color: '#d38265',
+          label: {
+            show: true,
+            position: 'top',
+            textStyle: {
+              color: 'white'
+            }
+          }
+        }
+      }
+    }]
+  })
+}
+
+function setFourEhart (personAttendanceRateList) {
+  const arr = personAttendanceRateList || []
+  var categoryArr = []
+  var valueArr = []
+  for (var i = 0; i < arr.length; i++) {
+    categoryArr.push(arr[i].personName)
+    valueArr.push(arr[i].attendanceRate)
+  }
+  console.log('=================', personAttendanceRateList, categoryArr, valueArr)
+  var fourec = echarts.init(document.getElementById('fourec'))
+  fourec.setOption({
+    tooltip: {},
+    title: {
+      show: true,
+      text: 'Top10',
+      x: '90%',
+      y: '70%',
+      textStyle: {
+        color: '#fff',
+        fontSize: '14',
+        fontWeight: 'normal',
+        textAlign: 'left'
+      }
+    },
+    xAxis: {
+      type: 'category',
+      data: categoryArr,
+      splitLine: {
+        show: false
+      },
+      axisLine: {
+        lineStyle: {
+          color: '#fff'
+        }
+      },
+      axisTick: {
+        show: false
+      },
+      axisLabel: {
+        color: '#fff',
+        interval: 0,
+        rotate: 30,
+        fontSize: '10px'
+      }
+    },
+    yAxis: {
+      type: 'value',
+      splitLine: {
+        show: false
+      },
+      axisLine: {
+        lineStyle: {
+          color: '#fff'
+        }
+      },
+      axisLabel: {
+        color: '#fff',
+        formatter: '{value} %'
+      }
+    },
+    series: [{
+      type: 'bar',
+      data: valueArr,
+      barWidth: '20px',
+      itemStyle: {
+        normal: {
+          color: '#d38265',
+          label: {
+            show: true,
+            position: 'top',
+            textStyle: {
+              color: 'white'
+            }
+          }
+        }
+      }
+
+    }]
+  })
+
+}
+
+var ECHART = $('.echart')
+ECHART.on('click', function () {
+  $(location).attr('pathname', '/galaxyLBS/kqRecord.html')
+})
+
+var monitor = new Vue({
+  el: '#fixed-main-wrap',
+  data: {
+    n: 1,
+    recordTime: nDayBefore(1),
+    departmentCodeList: [],
+
+    monthAttendanceList: []
+  },
+
+  methods: {
+    linkTo (param) {
+      top.location.href = 'kqRecord.html'
+    },
+    preMonth: function () {
+      const n = this.n + 1
+      this.n = n
+      this.recordTime = nDayBefore(n)
+      this.getAttendanceStatistics()
+    },
+    nextMonth: function () {
+      const n = this.n - 1
+      this.n = n
+      this.recordTime = nDayBefore(n)
+      this.getAttendanceStatistics()
+    },
+    getAttendanceStatistics: function () {
+      const that = this
+      POST(URLs.attendance_statistics, {
+        recordTime: this.recordTime,
+        departmentCodeList: this.departmentCodeList
+      }).then(function (res) {
+        if (res.errcode !== 10001) {
+          that.$message({
+            message: res.msg,
+            type: 'error'
+          })
+        } else {
+          console.log(res.data)
+          that.monthAttendanceList = res.data.monthAttendanceList
+          setOneEchart(res.data.monthAttendanceList)
+          setTwoEchart(res.data.departmentAttendanceRateList)
+          setThreeEchart(res.data.monthWorkingTimeList)
+          setFourEhart(res.data.personAttendanceRateList)
+        }
+      }).catch(function (error) {
+        console.log(error)
+      })
+    }
+
+  }
+})
+
+monitor.getAttendanceStatistics()
+
+</script>
+</body>
+</html>

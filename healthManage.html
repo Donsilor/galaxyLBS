@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>健康管理</title>
+  <link rel="stylesheet" href="css/element-ui/index.css">
+  <link rel="stylesheet" href="css/swiper.min.css">
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/healthManage.css">
+</head>
+<body>
+<div id="wrap">
+  <canvas id="space"><a href="javascript:" id="warp" style="display: none;">WARP SPEED</a></canvas>
+
+  <div id="fixed-top">
+    <a href="javascript:" class="logo fl"><img src="images/commonLogo.png" alt=""></a>
+    <div class="fixed-top-nav fl">
+      <ul class="clf">
+        <li v-for="item in menus" :class="[currPath == item.path? 'active' : '',  item.css]"><a :href="item.path"><span v-text="item.desc"></span></a></li>
+      </ul>
+    </div>
+    <div class="fixed-top-operate fr">
+      <div><a href="message.html"><img src="images/nav_iconEmail.png" alt=""></a></div>
+      <div>
+        <el-badge :value="amount" class="item">
+          <a href="alarmHistoryData.html"><img width="40" src="images/nav_iconWarn.png" alt=""></a>
+        </el-badge>
+      </div>
+      <div>
+        <a href="javascript:"><img src="images/nav_iconUser.png" alt=""></a>
+        <div class="subMenu">
+          <ul>
+            <li><a href="changePassword.html">修改密码</a></li>
+            <li><a href="javascript:void(0)" @click="logout">退出登录</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="fixed-side">
+    <div class="fixed-side-nav">
+      <form action="" class="searchDiv">
+        <input type="text" placeholder="请输入姓名">
+        <button></button>
+      </form>
+      <div class="sideList">
+        <ul>
+          <li>
+            <div class="item show">
+              <a href="javascript:" class="switchBtn"></a>
+              <label><input type="checkbox">佛山禅城看守所</label>
+            </div>
+            <ul>
+              <li>
+                <div class="item">
+                  <a href="javascript:" class="switchBtn"></a>
+                  <label><input type="checkbox">58号监仓</label>
+                </div>
+                <ul style="display:none;">
+                  <li>
+                    <div class="item"><label><input type="checkbox">肖彬彬</label></div>
+                    <div class="item"><label><input type="checkbox">肖彬彬</label></div>
+                    <div class="item"><label><input type="checkbox">肖彬彬</label></div>
+                    <div class="item"><label><input type="checkbox">肖彬彬</label></div>
+                    <div class="item"><label><input type="checkbox">肖彬彬</label></div>
+                    <div class="item"><label><input type="checkbox">肖彬彬</label></div>
+                  </li>
+                </ul>
+              </li>
+              <li>
+                <div class="item show">
+                  <a href="javascript:" class="switchBtn"></a>
+                  <label><input type="checkbox">59号监仓</label>
+                </div>
+                <ul>
+                  <li>
+                    <div class="item"><label><input type="checkbox">钟晓明</label></div>
+                    <div class="item"><label><input type="checkbox">钟晓明</label></div>
+                    <div class="item"><label><input type="checkbox">钟晓明</label></div>
+                    <div class="item"><label><input type="checkbox">钟晓明</label></div>
+                    <div class="item"><label><input type="checkbox">钟晓明</label></div>
+                    <div class="item"><label><input type="checkbox">钟晓明</label></div>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+      <a href="javascript:" class="toggleBtn unfold"></a>
+    </div>
+  </div>
+  <div id="fixed-main-wrap">
+    <div id="abs-level3menu"></div>
+    <div id="abs-main">
+      <div class="swiperBox">
+        <div class="swiper-container healthManageSwiper">
+          <div class="swiper-wrapper">
+            <div class="swiper-slide">
+              <div class="slideTitle">心率</div>
+            </div>
+            <div class="swiper-slide">
+              <div class="slideTitle">血压</div>
+            </div>
+            <div class="swiper-slide">
+              <div class="slideTitle">睡眠</div>
+            </div>
+            <div class="swiper-slide">
+              <div class="slideTitle">记步</div>
+            </div>
+          </div>
+        </div>
+        <div class="swiper-button-prev healthManageSwiper-prev"></div>
+        <div class="swiper-button-next healthManageSwiper-next"></div>
+        <div class="swiper-pagination healthManageSwiper-pagination"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="js/loadcommonjs.js"></script>
+<script src="js/common.js"></script>
+<script src="js/pages/header.js"></script>
+<script>
+
+  $(function () {
+    var swiper = new Swiper('.healthManageSwiper', {
+      loop: true,
+      slidesPerView: 2,
+      slidesPerGroup: 2,
+      spaceBetween: 60,
+      navigation: {
+        nextEl: '.healthManageSwiper-next',
+        prevEl: '.healthManageSwiper-prev'
+      },
+      pagination: {
+        el: '.healthManageSwiper-pagination',
+        clickable: true
+      }
+    });
+  })
+
+</script>
+</body>
+</html>

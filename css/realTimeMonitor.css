@@ -1,0 +1,37 @@
+#abs-main{padding-top: 1rem;}
+
+.floorPlanDiv{position: relative;height: 100%;overflow: hidden;}
+.dragLayer > canvas{margin: auto;display: block;}
+
+#abs-level3menu .filterDiv{background: url("../images/checkDiv_bg.png") no-repeat center/contain;line-height: 2.5rem;padding: 0 2rem;}
+#abs-level3menu .filterDiv input{vertical-align: text-bottom;margin-right: .5rem;}
+#abs-level3menu .filterDiv label:not(:first-of-type){margin-left: 1rem;}
+
+/*
+#abs-level3menu .infoPopup{position: absolute;left: 40%;transform: translateX(-50%);background: url("../images/popupFrame.png") no-repeat center/100% 100%;line-height: 2.5rem;padding: .3rem 2rem 0;}
+#abs-level3menu .infoPopup span{margin: 0 .5rem;}
+*/
+#fixed-main-wrap .infoPopup{position: absolute;right: 1.7%;top: 3.5rem;width: 23.8125rem;height: 16.5625rem;background: url("../images/infoPopupFrame.png") no-repeat center/100% 100%;padding: 2.625rem 1.875rem;z-index: 2;}
+#fixed-main-wrap .infoPopup .closeBtn{top: 1.5rem;right: .5rem;background: url("../images/closeBtn.png") no-repeat center/contain;border: none;}
+#fixed-main-wrap .infoPopup .headPortrait{width: 8.75rem;margin-right: 1.25rem;}
+#fixed-main-wrap .infoPopup .headPortrait img{display: block;width: 100%;}
+#fixed-main-wrap .infoPopup .infoDiv{float: right;width: 50%;font-size: .9rem;line-height: 1.375rem;}
+#fixed-main-wrap .infoPopup .infoDiv p{white-space: nowrap;}
+
+.dragLayer{position:relative;}
+.dragLayer .c1{position:absolute;left:0;top:0;filter:alpha(Opacity=50);-moz-opacity:0.9;opacity: 0.9;z-index:2; }
+.dragLayer .c2{position:absolute;left:0;top:0;}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

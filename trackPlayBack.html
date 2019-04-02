@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>轨迹回放</title>
+  <link rel="stylesheet" href="css/element-ui/index.css">
+  <link rel="stylesheet" href="css/swiper.min.css">
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/trackPlayBack.css">
+  <script src="js/loadcommonjs.js"></script>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="space"><a href="javascript:" id="warp" style="display: none;">WARP SPEED</a></canvas>
+  <div id="fixed-top">
+    <a href="javascript:" class="logo fl"><img src="images/commonLogo.png" alt=""></a>
+    <div class="fixed-top-nav fl">
+      <ul class="clf">
+        <li v-for="item in menus" :class="[currPath == item.path? 'active' : '',  item.css]"><a
+          :href="item.path"><span v-text="item.desc"></span></a></li>
+      </ul>
+    </div>
+    <div class="fixed-top-operate fr">
+      <div><a href="message.html"><img src="images/nav_iconEmail.png" alt=""></a></div>
+      <div>
+        <el-badge :value="amount" class="item">
+          <a href="alarmHistoryData.html"><img width="40" src="images/nav_iconWarn.png" alt=""></a>
+        </el-badge>
+      </div>
+      <div>
+        <a href="javascript:"><img src="images/nav_iconUser.png" alt=""></a>
+        <div class="subMenu">
+          <ul>
+            <li><a href="changePassword.html">修改密码</a></li>
+            <li><a href="javascript:void(0)" @click="logout">退出登录</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="fixed-side">
+    <div class="fixed-side-nav">
+      <el-input
+        placeholder="输入关键字进行过滤"
+        v-model="filterText">
+      </el-input>
+
+      <el-tree
+        default-expand-all
+        class="filter-tree"
+        :data="organization"
+        :props="defaultProps"
+        node-key="id"
+        show-checkbox
+        highlight-current
+        :default-checked-keys="defaultCheckedKeys"
+        :default-expanded-keys="defaultExpandedKeys"
+        :filter-node-method="filterNode"
+        @check="checkChange"
+        ref="tree2">
+      </el-tree>
+      <a href="javascript:" class="toggleBtn unfold"></a>
+    </div>
+  </div>
+  <div id="fixed-main-wrap">
+    <div id="abs-level3menu">
+      <div class="filterDiv fr">
+        <label><input type="checkbox" value="1" v-model="filter">显示名字</label>
+        <label><input type="checkbox" value="2" v-model="filter">显示轨迹</label>
+        <label><input type="checkbox" value="3" v-model="filter" @change="onfilter">显示围栏</label>
+      </div>
+    </div>
+    <div id="abs-main">
+      <div class="floorPlanDiv" id="floorPlanDiv">
+        <div id="dragObj" onmousewheel="return zoomFn(this)">
+          <div class="dragLayer">
+            <canvas class="c1" id="option" :width="width" :height="height"
+                    style="cursor:pointer;"></canvas>
+            <canvas class="c2" id="area" :width="width" :height="height"
+                    style="cursor:pointer"></canvas>
+
+          </div>
+        </div>
+      </div>
+      <div class="progressDiv clf">
+        <div class="progressBar">
+          <div class="range" id="range1"></div>
+          <p><input id="input1" type="text" title="" readonly/></p>
+        </div>
+        <div class="playHandleDiv">
+          <!--<input type="datetime-local" class="fl" title="startTime">-->
+          <el-date-picker
+            v-model="startTimeForE"
+            type="datetime"
+            placeholder="选择日期时间"
+            align="right"
+            size="mini"
+            :picker-options="pickerOptions1">
+          </el-date-picker>
+          <a href="javascript:" class="playMultiple_minus" @click="playMultiple_minus"><img
+            src="images/playMultiple_minus.png"></a>
+          <a href="javascript:" class="playBtn" @click="startPlay"><img src="images/playBtn.png"></a>
+          <a href="javascript:" class="playMultiple_add" @click="playMultiple_add"><img
+            src="images/playMultiple_add.png"></a>
+          <span class="multiple">x{{rate||1}}</span>
+          <!--<input type="datetime-local" class="fr" title="endTime">-->
+          <el-date-picker
+            v-model="endTimeForE"
+            type="datetime"
+            placeholder="选择日期时间"
+            align="right"
+            size="mini"
+            :picker-options="pickerOptions1">
+          </el-date-picker>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/common.js"></script>
+<script src="js/range.js"></script>
+<script src="js/pages/header.js"></script>
+<!--<script src="js/ticker/index.js"></script>-->
+<script src="js/accside.track.js"></script>
+<script src="js/draggabilly.pkgd.min.js"></script>
+<script>
+
+var diTuCtx = null
+var pic = 'images/floorPlan.png'
+
+var ctx = null
+
+var rangeHandle = null
+
+$(function () {
+
+  var input1 = document.getElementById('input1')
+  rangeHandle = new range('#range1', {
+    min: 0,
+    max: 100,
+    value: 0,
+    onSlide: function (status) {
+      input1.value = status.value
+    }
+  })
+
+  /**********************************************************************/
+  diTuCtx = document.getElementById('area').getContext('2d')
+  ctx = document.getElementById('option').getContext('2d')
+
+})
+
+function zoomFn (obj) {
+  var zoom = parseInt(obj.style.zoom, 10) || 100
+  zoom += event.wheelDelta / 12
+  if (zoom > 0)
+    obj.style.zoom = zoom + '%'
+  return false
+}
+
+function printFance (ctx, fences, rateX, rateY) {
+  for (var i = 0; i < fences.length; i++) {
+    const points = JSON.parse(fences[i].points)
+    ctx.beginPath()
+    ctx.strokeStyle = '#00ff13'
+    ctx.lineWidth = 2
+    var x1, y1 = 0
+    var x, y = 0
+    for (var i = 0; i < points.length; i++) {
+      const d = points[i]
+      x = d.x * rateX
+      y = d.y * rateY
+      ctx.lineTo(x, y)
+      if (i == 0) {
+        x1 = x
+        y1 = y
+      }
+    }
+    ctx.lineTo(x1, y1)
+    ctx.fillStyle = 'rgba(255,255,255,.5)'
+    ctx.fill()
+    ctx.stroke()
+    ctx.closePath()
+  }
+}
+
+function printDitu (pic, fences, width, height, rateX, rateY, isShowFences) {
+  diTuCtx.clearRect(0, 0, width, height)
+  var img = new Image()
+  img.onload = function () {
+    diTuCtx.drawImage(img, 0, 0)
+    if (isShowFences) {
+      printFance(diTuCtx, fences, rateX, rateY)
+    }
+  }
+  img.src = pic
+}
+
+function printGuiji (ctx, cs, currTime, width, height, rateX, rateY) {
+  ctx.clearRect(0, 0, width, height)
+  ctx.setLineDash([4, 4])
+  Object.keys(cs.coordinates).forEach(function (personCode, ii) {
+    const personCoods = cs.coordinates[personCode]
+    const personName = personCoods[0].personName
+    const index = cs.indexes[personCode] || 0
+
+    ctx.strokeStyle = '#0000ff'
+    ctx.beginPath()
+    var x, y = 0
+    if (index + 1 < personCoods.length) {
+      //ctx.lineCap = 'round'
+      for (var i = 0; i < index + 1; i++) {
+        const d = personCoods[i]
+        if (d.timestamp > currTime)
+          x = d.posX * rateX
+        y = d.posY * rateY
+        ctx.lineTo(x, y)
+      }
+      ctx.stroke()
+      ctx.closePath()
+
+    }
+
+    ctx.beginPath()
+    ctx.arc(x, y, 5, 0, 2 * Math.PI) // 圆点
+    ctx.fill()
+    ctx.fillText(personName, x, y + 20)
+    ctx.closePath()
+
+    cs.indexes[personCode] = index + 1
+  })
+}
+
+function printPoints (ctx, cs, currTime, width, height, rateX, rateY, isShowName) {
+  ctx.clearRect(0, 0, width, height)
+
+  Object.keys(cs.coordinates).forEach(function (personCode, i) {
+
+    const personCoods = cs.coordinates[personCode]
+    var index = cs.indexes[personCode] || 0
+    var flag = true
+
+    while (flag && index < personCoods.length - 1) {
+      const d = personCoods[index]
+
+      if (d.timestamp < currTime) {
+        flag = false
+        continue
+      }
+
+      const x = d.posX * rateX
+      const y = d.posY * rateY
+
+      ctx.beginPath()
+      ctx.arc(x, y, 5, 0, 2 * Math.PI) // 圆点
+      ctx.fillStyle = '#0000ff'
+      ctx.fill()
+      ctx.font = '14px Airal'
+      ctx.textAlign = 'center'
+      var text = d.personName
+      //ctx.fillText(text, d.posX * 50, d.posY * 50 + 20)
+      if (isShowName) {
+        ctx.fillText(text, x, y + 20)
+      }
+      ctx.stroke()
+      index += 1
+      break
+    }
+    cs.indexes[personCode] = index
+  })
+}
+
+var track = new Vue({
+  el: '#fixed-main-wrap',
+  data: {
+    pickerOptions1: {
+      shortcuts: [{
+        text: '今天',
+        onClick (picker) {
+          picker.$emit('pick', new Date())
+        }
+      }, {
+        text: '昨天',
+        onClick (picker) {
+          const date = new Date()
+          date.setTime(date.getTime() - 3600 * 1000 * 24)
+          picker.$emit('pick', date)
+        }
+      }, {
+        text: '一周前',
+        onClick (picker) {
+          const date = new Date()
+          date.setTime(date.getTime() - 3600 * 1000 * 24 * 7)
+          picker.$emit('pick', date)
+        }
+      }]
+    },
+
+    cs: {
+      startTime: 0,
+      endTime: 0,
+      queryStartTime: 0,
+      coordinates: {},
+      indexes: {}
+    },
+    //startTime: parseInt(new Date(new Date() - 24 * 60 * 60 * 1000).getTime()/1000),
+    startTimeForE: new Date().getTime() - 3600 * 1000 * 24,
+    endTimeForE: new Date().getTime(),
+    currPosition: 0,
+
+    rate: 1,
+
+    pic: 'images/floorPlan.png',
+    width: 1000,
+    height: 500,
+    rateX: 100,
+    rateY: 100,
+
+    filter: [],
+    points: {}, //轨迹点
+    fences: [],  //围栏
+    personCodes: [],
+
+    printHandle: null,
+    interval: 0.1 //默认1秒
+
+  },
+  computed: {
+    startTime: function () {
+      return Math.floor(this.startTimeForE)
+    },
+    endTime: function () {
+      return Math.floor(this.endTimeForE)
+    },
+
+    totalRange: function () {
+      return (this.endTime - this.startTime) / 1000
+    },
+
+    isShowName: function () {
+      for (var i = 0; i < this.filter.length; i++) {
+        if (this.filter[i] == 1) return true
+      }
+      return false
+    },
+
+    isShowGuiji: function () {
+      for (var i = 0; i < this.filter.length; i++) {
+        if (this.filter[i] == 2) return true
+      }
+      return false
+    },
+
+    isShowFances: function () {
+      for (var i = 0; i < this.filter.length; i++) {
+        if (this.filter[i] == 3) return true
+      }
+      return false
+    }
+  },
+  mounted: function () {
+    const that = this
+    if (userinfo.username != undefined && userinfo.username != '') {
+
+      POST(URLs.fences, {
+        page: 1,
+        listRows: 100
+      }).then(function (res) {
+        if (res.errcode !== 10001) {
+          that.$message({
+            message: res.msg,
+            type: 'error'
+          })
+        } else {
+          that.fences = res.data.result
+        }
+      }).catch(function (error) {
+        console.log(error)
+      })
+
+      POST(URLs.allFilesImg, {status: 1}).then(function (res) {
+        if (res.errcode !== 10001) {
+          that.$message({
+            message: res.msg,
+            type: 'error'
+          })
+        } else {
+          that.pic = res.data.result[0].path
+          that.width = res.data.result[0].picLength //+ 'px'
+          that.height = res.data.result[0].picWidth //+ 'px'
+          console.log(that.width / res.data.result[0].length, that.width, res.data.result[0].length)
+          that.rateX = that.width / res.data.result[0].length
+          that.rateY = that.height / res.data.result[0].width
+
+          printDitu(res.data.result[0].path, that.fences, that.width, that.height, that.rateX, that.rateY, false)
+
+        }
+      }).catch(function (error) {
+        console.log(error)
+      })
+    }
+  },
+
+  methods: {
+
+    onfilter: function (e) {
+      printDitu(this.pic, this.fences, this.width, this.height, this.rateX, this.rateY, this.isShowFances)
+    },
+
+    <!--playMultiple_minus: function () {-->
+    <!--if (this.rate == 0 || this.rate == 2) {-->
+    <!--this.rate -= 2-->
+    <!--return-->
+    <!--} else if (this.rate > 0) {-->
+    <!--this.rate /= 2-->
+    <!--return-->
+    <!--}-->
+    <!--if (this.rate > -16) {-->
+    <!--this.rate *= 2-->
+    <!--return-->
+    <!--}-->
+    <!--},-->
+
+    <!--playMultiple_add: function () {-->
+    <!--if (this.rate == 0 || this.rate == -2) {-->
+    <!--this.rate += 2-->
+    <!--return-->
+    <!--} else if (this.rate < 0) {-->
+    <!--this.rate /= 2-->
+    <!--return-->
+    <!--} else if (this.rate < 16) {-->
+    <!--this.rate *= 2-->
+    <!--return-->
+    <!--}-->
+    <!--},-->
+
+    playMultiple_minus: function () {
+      if (this.rate == 1) {
+        this.rate = 16
+      } else {
+        this.rate /= 2
+      }
+    },
+
+    playMultiple_add: function () {
+      if (this.rate == 16) {
+        this.rate = 1
+      } else {
+        this.rate *= 2
+      }
+    },
+
+    startPlay: function () {
+      const that = this
+
+      this.currPosition = 0
+
+      function play () {
+
+        var interval = that.interval
+        if (that.rate < 0) {
+          interval = interval * (-that.rate)
+        } else if (that.rate > 0) {
+          interval = interval / that.rate
+        }
+        that.currPosition += (1 / interval)
+
+        const slideValue = input1.valueOf()
+        const currValue = that.currPosition / that.totalRange * 100
+        if (slideValue > currValue) {
+          rangeHandle.setValue(slideValue)
+          that.currPosition = slideValue * that.totalRange
+        } else {
+          rangeHandle.setValue(currValue.toFixed(2))
+        }
+
+        const currTime = that.startTime + that.currPosition
+
+        if (that.isShowGuiji) {
+          printGuiji(ctx, that.cs, currTime, that.width, that.height, that.rateX, that.rateY)
+        } else {
+          printPoints(ctx, that.cs, currTime, that.width, that.height, that.rateX, that.rateY, that.isShowName)
+        }
+
+        console.log('=================print=', that.interval, interval, that.currPosition, that.totalRange, that.currPosition / that.totalRange * 100)
+
+        if (that.currPosition < that.totalRange) {
+          setTimeout(play, interval * 1000)
+        }
+      }
+
+      var startTime = this.startTime
+
+      this.getCoordinates(startTime, this.endTime)
+
+      play()
+    },
+
+    getCoordinates: function (startTime, endTime) {
+      const that = this
+      POST(URLs.coordinates, {
+        personCodes: this.personCodes,
+        startTime: startTime,
+        endTime: endTime
+      }).then(function (res) {
+        if (res.errcode !== 10001) {
+          that.$message({
+            message: res.msg,
+            type: 'error'
+          })
+        } else {
+          const pers = Object.keys(res.data.coordinates)
+          for (var i = 0; i < pers.length; i++) {
+            const p = pers[i]
+            const oldPoints = that.cs.coordinates[p] || []
+            that.cs.coordinates[p] = [].concat(oldPoints).concat(res.data.coordinates[p])
+          }
+
+          that.cs.startTime = res.data.startTime
+          that.cs.endTime = res.data.endTime
+          that.cs.queryStartTime = res.data.queryStartTime
+
+          if (res.data.queryStartTime < endTime && pers.length > 0) {
+            that.getCoordinates(res.data.queryStartTime, endTime)
+          }
+        }
+      }).catch(function (error) {
+        console.log(error)
+      })
+    }
+  }
+})
+
+</script>
+</body>
+</html>

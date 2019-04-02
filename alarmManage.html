@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>告警管理</title>
+    <link rel="stylesheet" href="css/element-ui/index.css">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/alarmManage.css">
+</head>
+<body>
+<div id="wrap">
+    <canvas id="space"><a href="javascript:" id="warp" style="display: none;">WARP SPEED</a></canvas>
+
+    <div id="fixed-top">
+        <a href="javascript:" class="logo fl"><img src="images/commonLogo.png" alt=""></a>
+        <div class="fixed-top-nav fl">
+            <ul class="clf">
+                <li v-for="item in menus" :class="[currPath == item.path? 'active' : '',  item.css]"><a
+                        :href="item.path"><span
+                        v-text="item.desc"></span></a></li>
+            </ul>
+        </div>
+        <div class="fixed-top-operate fr">
+            <div><a href="message.html"><img src="images/nav_iconEmail.png" alt=""></a></div>
+            <div>
+                <el-badge :value="amount" class="item">
+                    <a href="alarmHistoryData.html"><img width="40" src="images/nav_iconWarn.png" alt=""></a>
+                </el-badge>
+            </div>
+            <div>
+                <a href="javascript:"><img src="images/nav_iconUser.png" alt=""></a>
+                <div class="subMenu">
+                    <ul>
+                        <li><a href="changePassword.html">修改密码</a></li>
+                        <li><a href="javascript:void(0)" @click="logout">退出登录</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="fixed-side">
+        <div class="fixed-side-nav">
+            <form action="" class="searchDiv">
+                <input type="text" placeholder="请输入姓名">
+                <button></button>
+            </form>
+            <div class="sideList">
+                <tree-menu v-bind:item="organization"/>
+            </div>
+            <a href="javascript:" class="toggleBtn unfold"></a>
+        </div>
+    </div>
+    <div id="fixed-main-wrap">
+        <div id="abs-level3menu"></div>
+        <div id="abs-main">
+            <div class="chartDiv-row">
+                <div class="chartDiv-col">
+                    <div class="chartDiv-cel">
+                        <div class="chartTitle">今日告警</div>
+                        <div id="todayAlarm" class="echart"></div>
+                    </div>
+                </div>
+                <div class="chartDiv-col">
+                    <div class="chartDiv-cel">
+                        <div class="chartTitle">本月告警</div>
+                        <div id="currentMonthAlarm" class="echart"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="chartDiv-row">
+                <div class="chartDiv-col">
+                    <div class="chartDiv-cel">
+                        <div class="chartTitle">告警次数
+                            <div class="switchTab alarmNumberTab">
+                                <span id="c3m">月</span>
+                                <span class="selected" id="c3d">日</span>
+                            </div>
+                        </div>
+                        <div id="alarmNumber" class="echart"></div>
+                    </div>
+                </div>
+                <div class="chartDiv-col">
+                    <div class="chartDiv-cel">
+                        <div class="chartTitle">告警人员
+                            <div class="switchTab alarmPeopleTab">
+                                <span id="c4m">月</span>
+                                <span class="selected" id="c4d">日</span>
+                            </div>
+                        </div>
+                        <div id="alarmPeople" class="echart"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="js/loadcommonjs.js"></script>
+<script src="js/echarts.min.js"></script>
+<script src="js/common.js"></script>
+<script src="js/pages/header.js"></script>
+<script src="js/accside.js"></script>
+<script>
+
+    var todayAlarm = echarts.init(document.getElementById('todayAlarm'))
+    var currentMonthAlarm = echarts.init(document.getElementById('currentMonthAlarm'))
+
+    var alarmNumber = echarts.init(document.getElementById('alarmNumber'))
+    var alarmPeople = echarts.init(document.getElementById('alarmPeople'))
+
+    function getBarOption(data) {
+
+        return {
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: {
+                    type: 'shadow'
+                }
+            },
+            grid: {
+                top: '18%',
+                right: '5%',
+                bottom: '20%',
+                left: '12%'
+            },
+            xAxis: {
+                data: data.xAxis || [],
+                splitLine: {
+                    show: false
+                },
+                axisLine: {
+                    lineStyle: {
+                        color: '#fff'
+                    }
+                },
+                axisLabel: {
+                    color: '#fff'
+                }
+            },
+            yAxis: {
+                splitLine: {
+                    show: false
+                },
+                axisLine: {
+                    lineStyle: {
+                        color: '#fff'
+                    }
+                },
+                axisLabel: {
+                    color: '#fff'
+                }
+            },
+            series: [
+                {
+                    name: '严重',
+                    type: 'bar',
+                    stack: '告警类型',
+                    data: data.urgency || [],
+                    itemStyle: {
+                        normal: {color: '#c13531'}
+                    }
+                },
+                {
+                    name: '普通',
+                    type: 'bar',
+                    stack: '告警类型',
+                    data: data.common || [],
+                    itemStyle: {
+                        normal: {color: '#d48265'}
+                    }
+                },
+                {
+                    name: '提示',
+                    type: 'bar',
+                    stack: '告警类型',
+                    data: data.tip || [],
+                    itemStyle: {
+                        normal: {color: '#91c7ae'}
+                    },
+                    barWidth: '32px'
+                }
+            ]
+        }
+
+    }
+
+    function getOption(data) {
+        return {
+            tooltip: {
+                trigger: 'item',
+                formatter: '{a} <br/>{b} : {c} ({d}%)'
+            },
+            series: [
+                {
+                    name: '告警数',
+                    type: 'pie',
+                    label: {
+                        position: 'inside'
+                    },
+                    radius: '75%',
+                    center: ['50%', '50%'],
+                    data: [
+                        {value: data.common, name: '普通'},
+                        {value: data.tip, name: '提示'},
+                        {value: data.urgency, name: '严重'}
+                    ],
+                    itemStyle: {
+                        emphasis: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    },
+                    color: ['#d48265', '#91c7ae', '#c23531']
+                }
+            ]
+        }
+    }
+
+    function getWarningsStatistics() {
+        POST(URLs.statistics, {}).then(function (res) {
+            if (res.errcode !== 10001) {
+                alert(res.msg)
+            } else {
+                console.log(res.data)
+                todayAlarm.setOption(getOption(res.data.day))
+                currentMonthAlarm.setOption(getOption(res.data.month))
+
+      const topWarningTimes = res.data.topWarningTimes
+      const c3x = []
+      const tip3 = []
+      const urgency3 = []
+      const common3 = []
+      for (var i = 0; i < topWarningTimes.length; i++) {
+        c3x.push(topWarningTimes[i].recordTime)
+        tip3.push(topWarningTimes[i].tip)
+        urgency3.push(topWarningTimes[i].urgency)
+        common3.push(topWarningTimes[i].common)
+      }
+      alarmNumber.setOption(getBarOption({xAxis: c3x, tip: tip3, common: common3, urgency: urgency3}))
+
+      const top = res.data.top
+      const c4x = []
+      const tip4 = []
+      const urgency4 = []
+      const common4 = []
+      for (var i = 0; i < top.length; i++) {
+        c4x.push(top[i].personName)
+        tip4.push(top[i].tip)
+        urgency4.push(top[i].urgency)
+        common4.push(top[i].common)
+      }
+      alarmPeople.setOption(getBarOption({xAxis: c4x, tip: tip4, common: common4, urgency: urgency4}))
+            }
+        }).catch(function (error) {
+            console.log(error)
+        })
+    }
+
+    function getWarningsopWaringTimes(statisticsTimeType) {
+        POST(URLs.topWaringTimes, {statisticsTimeType: statisticsTimeType || 1}).then(function (res) {
+            if (res.errcode !== 10001) {
+                alert(res.msg)
+            } else {
+                console.log(res.data)
+                const topWarningTimes = res.data.topWarningTimes
+                const c3x = []
+                const tip3 = []
+                const urgency3 = []
+                const common3 = []
+                for (var i = 0; i < topWarningTimes.length; i++) {
+                    c3x.push(topWarningTimes[i].recordTime)
+                    tip3.push(topWarningTimes[i].tip)
+                    urgency3.push(topWarningTimes[i].urgency)
+                    common3.push(topWarningTimes[i].common)
+                }
+                alarmNumber.setOption(getBarOption({xAxis: c3x, tip: tip3, common: common3, urgency: urgency3}))
+            }
+        }).catch(function (error) {
+            console.log(error)
+        })
+    }
+
+
+    function getWarningsTopWaringPersons(type) {
+        var startTime = moment().startOf('day').valueOf();
+        var endTime = moment().endOf('day').valueOf();
+
+        if (type == 2) {
+            startTime = moment().startOf('month').valueOf();
+            endTime = moment().endOf('month').valueOf();
+        }
+
+        POST(URLs.topWaringPersons, {startTime: startTime, endTime: endTime}).then(function (res) {
+            if (res.errcode !== 10001) {
+                alert(res.msg)
+            } else {
+                console.log(res.data)
+
+                const top = res.data.top
+                const c4x = []
+                const tip4 = []
+                const urgency4 = []
+                const common4 = []
+                for (var i = 0; i < top.length; i++) {
+                    c4x.push(top[i].personName)
+                    tip4.push(top[i].tip)
+                    urgency4.push(top[i].urgency)
+                    common4.push(top[i].common)
+                }
+                alarmPeople.setOption(getBarOption({xAxis: c4x, tip: tip4, common: common4, urgency: urgency4}))
+            }
+        }).catch(function (error) {
+            console.log(error)
+        })
+    }
+
+
+    $(function () {
+        getWarningsStatistics()
+        //getWarningsAmount();
+        //getWarningsopWaringTimes(1)
+        //getWarningsTopWaringPersons(1)
+
+        //选项卡切换
+        function Tab(option, active, tabObj, siblingObj) {
+            var $bp = $(option);
+            $bp.click(function () {
+                $(this).addClass(active).siblings().removeClass(active);
+                var index = $bp.index(this);
+                $(tabObj).eq(index).show().siblings(siblingObj).hide();
+
+                const id = this.getAttribute("id");
+                if (id == "c3d") {
+                    getWarningsopWaringTimes(1)
+                }
+
+                if (id == "c3m") {
+                    getWarningsopWaringTimes(2)
+                }
+
+                if (id == "c4d") {
+                    getWarningsTopWaringPersons(1)
+                }
+
+                if (id == "c4m") {
+                    getWarningsTopWaringPersons(2)
+                }
+            });
+        }
+
+
+        Tab('.alarmNumberTab span', 'selected')
+        Tab('.alarmPeopleTab span', 'selected')
+
+    })
+
+</script>
+</body>
+</html>

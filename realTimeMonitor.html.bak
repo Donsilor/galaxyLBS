@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>实时监控</title>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="css/element-ui/index.css">
+    <link rel="stylesheet" href="css/swiper.min.css">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/realTimeMonitor.css">
+    <script src="js/loadcommonjs.js"></script>
+</head>
+<body>
+
+<div id="wrap">
+    <canvas id="space"><a href="javascript:" id="warp" style="display: none;">WARP SPEED</a></canvas>
+    <div id="fixed-top">
+        <a href="javascript:" class="logo fl"><img src="images/commonLogo.png" alt=""></a>
+        <div class="fixed-top-nav fl">
+            <ul class="clf">
+                <li v-for="item in menus" :class="[currPath == item.path? 'active' : '',  item.css]"><a
+                        :href="item.path"><span
+                        v-text="item.desc"></span></a></li>
+            </ul>
+        </div>
+        <div class="fixed-top-operate fr">
+            <div><a href="message.html"><img src="images/nav_iconEmail.png" alt=""></a></div>
+            <div><a href="alarmHistoryData.html"><img src="images/nav_iconWarn.png" alt=""></a></div>
+            <div>
+                <a href="javascript:"><img src="images/nav_iconUser.png" alt=""></a>
+                <div class="subMenu">
+                    <ul>
+                        <li><a href="changePassword.html">修改密码</a></li>
+                        <li><a href="javascript:void(0)" @click="logout">退出登录</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="fixed-side">
+        <div class="fixed-side-nav">
+            <el-input
+                    placeholder="输入关键字进行过滤"
+                    v-model="filterText">
+            </el-input>
+
+            <el-tree
+                    class="filter-tree"
+                    :data="organization"
+                    :props="defaultProps"
+                    node-key="id"
+                    show-checkbox
+                    highlight-current
+                    :default-checked-keys="defaultCheckedKeys"
+                    :default-expanded-keys="defaultExpandedKeys"
+                    :filter-node-method="filterNode"
+                    @node-click="nodeClick"
+                    @check="checkChange"
+                    ref="tree2">
+            </el-tree>
+
+        </div>
+    </div>
+    <div id="monitor">
+        <div id="fixed-main-wrap">
+            <div id="abs-level3menu">
+                <div class="infoPopup popup" v-if="isToShowNodeInfo">
+                    <span>姓名：{{selectNode.personName}}</span>
+                    <span>年龄：{{selectNode.age}}</span>
+                    <span>心率： {{selectNode.heartRate}}</span>
+                    <span>血压：120/80</span>
+                    <span>犯罪类型：{{selectNode.prisonCause}}</span>
+                    <a href="javascript:" class="closeBtn"></a>
+                </div>
+                <div class="filterDiv fr">
+                    <label><input type="checkbox" value="1" v-model="filter">显示名字</label>
+                    <label><input type="checkbox" value="2" v-model="filter">显示轨迹</label>
+                    <label><input type="checkbox" value="3" v-model="filter">显示围栏</label>
+                    <!--<label><input type="checkbox" value="4" v-model="filter">显示基站</label>-->
+                </div>
+            </div>
+            <div id="abs-main">
+                <div class="floorPlanDiv" id="floorPlanDiv">
+                    <div id="dragObj" onmousewheel="">
+                        <div class="dragLayer">
+                            <canvas class="c1" id="option" :width="width" :height="height" onmousewheel="return zoomFn(this)" style="cursor:pointer;" ></canvas>
+                            <canvas class="c2" id="area" :width="width" :height="height" onmousewheel="return zoomFn(this)" style="cursor:pointer" ></canvas>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="popup warnPopup">
+            <a href="javascript:" class="closeBtn"></a>
+            <div class="swiper-container warnSwiper">
+                <div class="swiper-wrapper">
+                    <div class="swiper-slide" v-for="e in alarms">
+                        <p class="descript"><i class="warn"></i>{{e.personName}}({{e.personCode}}){{e.msg}}</p>
+                        <p class="time">{{formatDate(e.timestamp)}}</p>
+                        <!--<a href="javascript:" class="viewBtn">查看视频</a>-->
+                    </div>
+                    <!--<div class="swiper-slide">-->
+                        <!--<p class="descript"><i class="warn"></i>钟晓明(626532)违规离开监仓59</p>-->
+                        <!--<p class="time">2018-07-18 17:53:50</p>-->
+                        <!--<a href="javascript:" class="viewBtn">查看视频</a>-->
+                    <!--</div>-->
+                    <!--<div class="swiper-slide">-->
+                        <!--<p class="descript"><i class="warn"></i>钟晓明(626532)违规离开监仓59</p>-->
+                        <!--<p class="time">2018-07-18 17:53:50</p>-->
+                        <!--<a href="javascript:" class="viewBtn">查看视频</a>-->
+                    <!--</div>-->
+                </div>
+                <div class="swiper-button-prev warnSwiper-button-prev"></div>
+                <div class="swiper-button-next warnSwiper-button-next"></div>
+            </div>
+            <div class="swiper-pagination warnSwiper-pagination"></div>
+            <div class="decorate"><img src="images/popupBottomBg.png" alt=""></div>
+        </div>
+    </div>
+</div>
+
+
+<script src="js/common.js"></script>
+<script src="js/pages/header.js"></script>
+<!-- 引入组件库 -->
+<script src="js/accside.realtime.js"></script>
+<script src="js/draggabilly.pkgd.min.js"></script>
+<script>
+
+    var ctx = null
+    var pic = 'images/floorPlan.png'
+
+    $(function () {
+
+        var warnSwiper = new Swiper('.warnSwiper', {
+            loop: true,
+            pagination: {
+                el: '.warnSwiper-pagination',
+                type: 'fraction'
+            },
+            navigation: {
+                nextEl: '.warnSwiper-button-next',
+                prevEl: '.warnSwiper-button-prev'
+            }
+        })
+
+        ctx = document.getElementById('area').getContext('2d')
+
+    })
+
+    function zoomFn(obj){
+        var zoom = parseInt(obj.style.zoom,10)||100;
+        zoom += event.wheelDelta / 12;
+        if(zoom > 0 )
+            obj.style.zoom=zoom+'%';
+        return false;
+    }
+
+
+    function printFance(ctx, fences,  rateX, rateY) {
+        for (var i=0; i< fences.length; i++) {
+            const points = JSON.parse(fences[i].points)
+            console.log('=============fences.length============', points, points.length)
+            ctx.beginPath();
+            ctx.strokeStyle = '#00ff13';
+            var x, y = 0
+            for (var i=0; i < points.length; i++) {
+                const d = points[i]
+                x = d.x * rateX
+                y = d.y * rateY
+                ctx.lineTo(x, y)
+
+            }
+            ctx.fillStyle = 'rgba(255,255,255,.5)';
+            ctx.fill();
+            ctx.stroke();
+            ctx.closePath();
+
+        }
+    }
+
+
+    function printGuiji(ctx, pic, points, fences, width, height,  rateX, rateY, isShowFences) {
+        ctx.clearRect(0, 0, width, height)
+        var img = new Image()
+        img.onload = function () {
+            ctx.drawImage(img, 0, 0)
+            ctx.setLineDash([4, 4])
+            Object.keys(points).forEach(function(item, index){
+                const lines = points[item];
+                ctx.beginPath()
+                ctx.strokeStyle = '#0000ff'
+
+                //ctx.lineCap = 'round'
+                var x, y = 0
+                for (var i=0; i<lines.length; i++) {
+                    const d = lines[i]
+                    x = d.posX * rateX
+                    y = d.posY * rateY
+                    ctx.lineTo(x, y)
+
+                }
+                ctx.stroke()
+                ctx.closePath();
+
+                //ctx.strokeStyle = '#0000ff'
+                ctx.beginPath();
+                ctx.arc(x, y, 5, 0, 2 * Math.PI) // 圆点
+                ctx.fill()
+                ctx.fillText(item, x, y + 20)
+                ctx.closePath()
+            });
+
+            if (isShowFences) {
+                printFance(ctx, fences,  rateX, rateY)
+            }
+
+        }
+        img.src = pic
+    }
+
+    function printPoints(ctx, pic, persons, fences, width, height, rateX, rateY, isShowName, isShowFences) {
+        ctx.clearRect(0, 0, width, height)
+        var img = new Image()
+        img.onload = function () {
+            ctx.drawImage(img, 0, 0)
+
+            for (var i = 0; i < persons.length; i++) {
+                var d = persons[i]
+
+                if(d.personCode == monitor.selectNode.personCode) {
+                    monitor.selectNode.heartRate = d.heartRate
+                }
+
+                const x = d.posX * rateX
+                const y = d.posY * rateY
+
+                ctx.beginPath()
+                ctx.arc(x, y, 5, 0, 2 * Math.PI) // 圆点
+                ctx.fillStyle = '#0000ff'
+                ctx.fill()
+                ctx.font = '14px Airal'
+                ctx.textAlign = 'center'
+                var text = d.personName
+                //ctx.fillText(text, d.posX * 50, d.posY * 50 + 20)
+                if (isShowName) {
+                    ctx.fillText(text, x, y + 20)
+                }
+                ctx.stroke()
+            }
+           if (isShowFences) {
+               printFance(ctx, fences,  rateX, rateY)
+           }
+        }
+        img.src = pic
+    }
+
+    var monitor = new Vue({
+        el: '#monitor',
+        data: {
+            loading: false,
+            websocket: null,
+            alarmsSocket: null,
+            selectNode: {},
+            pic: 'images/floorPlan.png',
+            width: 1000,
+            height: 500,
+            rateX: 100,
+            rateY: 100,
+
+
+            filter: [],
+
+            points: {}, //轨迹点
+
+            fences:[],  //围栏
+
+            alarms: [],
+        },
+        computed: {
+            isToShowNodeInfo: function () {
+                return this.selectNode.personName !== undefined
+            },
+            isShowName: function () {
+                for (var i = 0; i < this.filter.length; i++) {
+                    if (this.filter[i] == 1) return true
+                }
+                return false
+            },
+
+            isShowGuiji: function () {
+                for (var i = 0; i < this.filter.length; i++) {
+                    if (this.filter[i] == 2) return true
+                }
+                return false
+            },
+
+            isShowFances: function () {
+                for (var i = 0; i < this.filter.length; i++) {
+                    if (this.filter[i] == 3) return true
+                }
+                return false
+            },
+        },
+        mounted: function () {
+            const that = this
+            if (userinfo.username!=undefined&& userinfo.username!="") {
+
+                POST(URLs.fences, {
+                    page: 1,
+                    listRows: 100,
+                }).then(function (res) {
+                    if (res.errcode !== 10001) {
+                        alert(res.msg)
+                    } else {
+                        that.fences = res.data.result;
+                    }
+                }).catch(function (error) {
+                    console.log(error);
+                });
+
+
+                POST(URLs.allFilesImg, {status: 1}).then(function (res) {
+                    if (res.errcode !== 10001) {
+                        alert(res.msg)
+                    } else {
+                        that.pic = res.data.result[0].path
+                        that.width = res.data.result[0].picLength //+ 'px'
+                        that.height = res.data.result[0].picWidth //+ 'px'
+
+                        that.rateX = that.width / res.data.result[0].length
+                        that.rateY = that.height / res.data.result[0].width
+
+                        printPoints(ctx, res.data.result[0].path, [], [], that.width, that.height, that.rateX, that.rateY, false, false)
+                    }
+                }).catch(function (error) {
+                    console.log(error)
+                })
+            }
+        },
+        created: function () {
+            //页面刚进入时开启长连接
+            this.initWebSocket()
+        },
+        destroyed: function () {
+            //页面销毁时关闭长连接
+            this.websocketclose()
+        },
+        methods: {
+	         formatDate : function(t) {
+                 return moment(t).format("YYYY-MM-DD hh:mm:ss")
+             },
+            initWebSocket: function () { //初始化weosocket
+
+                const wsuri = 'ws://qkwl.tpddns.cn:10006/coordinate/coors?query=123'//ws地址
+                this.websocket = new WebSocket(wsuri)
+                this.websocket.onopen = this.websocketonopen
+
+                this.websocket.onerror = this.websocketonerror
+
+                this.websocket.onmessage = this.websocketonmessage
+                this.websocket.onclose = this.websocketclose
+
+
+                const alarmsUri =  'ws://qkwl.tpddns.cn:10005/alarm/alarms'
+
+                this.alarmsSocket = new WebSocket(alarmsUri)
+                this.alarmsSocket.onopen = this.alarmsSocketonopen
+
+                this.alarmsSocket.onerror = this.alarmsSocketonerror
+
+                this.alarmsSocket.onmessage = this.alarmsSocketonmessage
+                this.alarmsSocket.onclose = this.alarmsSocketclose
+
+
+            },
+
+            websocketonopen: function () {
+                console.log('WebSocket连接成功')
+                this.websocket.send(JSON.stringify({type: 1, username: userinfo.username}))
+            },
+            websocketonerror: function (e) { //错误
+                console.log('WebSocket连接发生错误')
+            },
+            websocketonmessage: function (e) { //数据接收
+                const redata = JSON.parse(e.data)
+                //注意：长连接我们是后台直接1秒推送一条数据，
+                //但是点击某个列表时，会发送给后台一个标识，后台根据此标识返回相对应的数据，
+                //这个时候数据就只能从一个出口出，所以让后台加了一个键，例如键为1时，是每隔1秒推送的数据，为2时是发送标识后再推送的数据，以作区分
+                //console.log(redata, this.isShowName)
+
+                if (this.isShowGuiji) {
+                    printGuiji(ctx, this.pic, this.points, this.fences, this.width, this.height, this.rateX, this.rateY, this.isShowFances)
+                } else {
+                    printPoints(ctx, this.pic, redata.data, this.fences, this.width, this.height, this.rateX, this.rateY, this.isShowName, this.isShowFances)
+                }
+                const points = this.points;
+                for (var i = 0; i < redata.data.length; i++) {
+                    const p = redata.data[i];
+                    const arr = points[p.personName] || []
+                    if (arr.length > 30) {
+                        arr.shift();
+                    }
+                    arr.push(p)
+                    points[p.personName] = arr
+                    this.points = points;
+                }
+            },
+
+            websocketsend: function (agentData) {//数据发送
+                this.websocket.send(JSON.stringify({type: 1}))
+            },
+
+            websocketclose: function (e) { //关闭
+                console.log('connection closed (' + e.code + ')')
+            },
+
+            //*******************************************
+
+            alarmsSocketonopen: function () {
+                console.log('alarm webSocket连接成功')
+                this.alarmsSocket.send(JSON.stringify({type: 1, username: userinfo.username}))
+            },
+            alarmsSocketonerror: function (e) { //错误
+                console.log('WebSocket连接发生错误')
+            },
+            alarmsSocketonmessage: function (e) { //数据接收
+                const redata = JSON.parse(e.data)
+                this.alarms = redata.data
+                console.log(redata,'================数据接收=====================')
+            },
+
+            alarmsSocketsend: function (agentData) {//数据发送
+                console.log('=============1=========')
+                this.alarmsSocket.send(JSON.stringify({type: 1}))
+            },
+
+            alarmsSocketclose: function (e) { //关闭
+                console.log('connection closed (' + e.code + ')')
+            }
+        }
+    })
+
+</script>
+</body>
+</html>

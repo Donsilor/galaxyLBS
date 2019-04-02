@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>组织管理</title>
+  <link rel="stylesheet" href="css/element-ui/index.css">
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/systemManage_organizeManage.css">
+  <script src="js/loadcommonjs.js"></script>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="space"><a href="javascript:" id="warp" style="display: none;">WARP SPEED</a></canvas>
+
+  <div id="fixed-top">
+    <a href="javascript:" class="logo fl"><img src="images/commonLogo.png" alt=""></a>
+    <div class="fixed-top-nav fl">
+      <ul class="clf">
+        <li v-for="item in menus" :class="[currPath == item.path? 'active' : '',  item.css]"><a
+          :href="item.path"><span
+          v-text="item.desc"></span></a></li>
+      </ul>
+    </div>
+    <div class="fixed-top-operate fr">
+      <div><a href="message.html"><img src="images/nav_iconEmail.png" alt=""></a></div>
+      <div>
+        <el-badge :value="amount" class="item">
+          <a href="alarmHistoryData.html"><img width="40" src="images/nav_iconWarn.png" alt=""></a>
+        </el-badge>
+      </div>
+      <div>
+        <a href="javascript:"><img src="images/nav_iconUser.png" alt=""></a>
+        <div class="subMenu">
+          <ul>
+            <li><a href="changePassword.html">修改密码</a></li>
+            <li><a href="javascript:void(0)" @click="logout">退出登录</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <div id="fixed-side">
+    <div class="systemManage-nav">
+      <ul>
+        <li class="active">
+          <a href="systemManage_peopleManage.html">人员管理</a>
+          <div>
+            <a href="systemManage_peopleManage.html">人员管理</a>
+            <a href="systemManage_organizeManage.html" class="active">组织管理</a>
+          </div>
+        </li>
+        <li><a href="systemManage_areaManage.html">区域管理</a></li>
+        <li>
+          <a href="systemManage_tacticsManage.html">策略管理</a>
+          <div>
+            <a href="systemManage_tacticsManage.html">围栏策略</a>
+          </div>
+        </li>
+        <li>
+          <a href="systemManage_equManage.html">设备管理</a>
+          <div>
+            <a href="systemManage_equManage.html">设备升级</a>
+          </div>
+        </li>
+        <li>
+          <a href="systemManage_wjManage.html">文件管理</a>
+          <div>
+            <a href="systemManage_wjManage.html">地图管理</a>
+            <a href="systemManage_wjManage_bb.html">版本管理</a>
+          </div>
+        </li>
+        <li><a href="javascript:">二次开发</a></li>
+      </ul>
+    </div>
+  </div>
+  <div id="fixed-main-wrap">
+    <div id="abs-level3menu"></div>
+    <div id="abs-main">
+      <div id="dragObj">
+        <div class="dragLayer">
+          <div class="organizeFramework"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="layer"></div>
+<div id="addNodePopup" class="popup">
+  <div class="popupHead">
+    <div class="titile fl">新增部门</div>
+    <a href="javascript:" class="closeBtn fr"></a>
+  </div>
+  <div class="popupMain">
+    <div class="row">
+      <span class="fl"><i class="colorRed">*</i>部门名称</span>
+      <div class="dd">
+        <input title="" name="add_departmentName"/>
+      </div>
+    </div>
+    <div class="row">
+      <span class="fl">添加人员</span>
+      <div class="dd">
+        <select title="" id="addPersonSelect" name="add_personCode"></select>
+      </div>
+    </div>
+    <div class="row">
+      <span class="fl">部门描述</span>
+      <div class="dd">
+        <input title="" name="add_remark"/>
+      </div>
+    </div>
+  </div>
+  <div class="popupBtns">
+    <a href="javascript:" class="confirmBtn" onclick="addDepart()">确定</a>
+    <a href="javascript:" class="cancelBtn">取消</a>
+  </div>
+</div>
+<div id="editNodePopup" class="popup">
+  <div class="popupHead">
+    <div class="titile fl">修改部门信息</div>
+    <a href="javascript:" class="closeBtn fr"></a>
+  </div>
+  <div class="popupMain">
+    <div class="row">
+      <span class="fl">部门名称</span>
+      <div class="dd">
+        <input title="" id="editDepartmentTitle" name="edit_departmentName"/>
+      </div>
+    </div>
+    <div class="row" style="z-index: 2;">
+      <span class="fl">上级部门</span>
+      <div class="dd">
+        <select title="" id="departmentSelect" name="edit_parentCode"></select>
+      </div>
+    </div>
+    <div class="row">
+      <span class="fl">添加人员</span>
+      <div class="dd">
+        <select title="" id="personSelect" name="edit_personCode"></select>
+      </div>
+    </div>
+    <div class="row">
+      <span class="fl">部门描述</span>
+      <div class="dd">
+        <input title="" name="edit_remark"/>
+      </div>
+    </div>
+  </div>
+  <div class="popupBtns">
+    <a href="javascript:" class="confirmBtn" onclick="editDepart()">确定</a>
+    <a href="javascript:" class="cancelBtn">取消</a>
+  </div>
+</div>
+<div id="deleteNodePopup" class="popup">
+  <div class="popupHead">
+    <div class="titile fl">修改部门信息</div>
+    <a href="javascript:" class="closeBtn fr"></a>
+  </div>
+  <div class="popupMain">
+    <div class="row">
+      <div class="deleteAffirm">是否删除<span class="nodeName"></span>?</div>
+    </div>
+  </div>
+  <div class="popupBtns">
+    <a href="javascript:" class="confirmBtn" onclick="deleteDepart()">确定</a>
+    <a href="javascript:" class="cancelBtn">取消</a>
+  </div>
+</div>
+
+
+
+<script src="js/common.js"></script>
+<script src="js/draggabilly.pkgd.min.js"></script>
+<script src="js/pages/header.js"></script>
+
+<script>
+
+  function renderNode(node) {
+    var root = "";
+    if (node.departmentName === "") {
+      return root
+    }
+
+    root += `
+         <table class="root" cellpadding="0" cellspacing="0">
+            <tr class="currTopNode">
+               <td colspan="12">
+               <div class="pack">
+                 <div class="box">
+                    <span class="nodeName">${node.departmentName}</span>
+                    <div class="handle">
+                    <a href="javascript:void(0)" class="addNode"><i id="${node.departmentCode}" class="iconfont icon-tianjiajiahaowubiankuang"></i></a>
+                    <a href="javascript:void(0)" class="editNode" ><i id="${node.departmentCode}$${node.departmentName}$${node.remark}$${node.parentCode}" class="iconfont icon-bianji"></i></a>
+                    <a href="javascript:void(0)" class="deleteNode"><i id="${node.departmentCode}$${node.parentCode}" class="iconfont icon-delete"></i></a>
+                    </div>
+                 </div>
+                </div>
+                </td>
+            </tr>
+         `;
+
+    var childrenNodes = node.children;
+
+    if (childrenNodes.length > 0) {
+      root += `
+                <tr class="lines">
+                <td colspan="12">
+                <div class="downLine"></div>
+                </td>
+                </tr>`;
+
+      root += `
+               <tr class="lines">
+                <td class="rightLine"></td>
+                `;
+
+      for (let i = 0; i < childrenNodes.length - 1; i++) {
+        root += `
+                <td class="leftLine topLine"></td>
+                <td class="rightLine topLine"></td>
+                `
+      }
+
+      root += `
+                <td class="leftLine"></td>
+                </td>
+                </tr>`;
+
+      root += `<tr class="nodes">`;
+
+      for (let i = 0; i < childrenNodes.length; i++) {
+        root += '<td colspan="2">';
+        root += renderNode(childrenNodes[i]);
+        root += '</td>'
+      }
+
+      root += `</tr>`
+    }
+
+    root += `
+         </table>
+        `;
+    return root;
+  }
+
+  var organization = new Vue({
+    el: '#fixed-main-wrap',
+    data: {
+      organization: {}
+    },
+    methods: {
+      getTree: function () {
+        const that = this;
+        POST(URLs.organization, {containsPerson: 0}).then(function (res) {
+          if (res.errcode !== 10001) {
+            alert(res.msg)
+          } else {
+            that.organization = res.data;
+            $('.organizeFramework > table').remove();
+            $('.organizeFramework').append(renderNode(res.data))
+          }
+        }).catch(function (error) {
+          console.log(error);
+        });
+      },
+
+    }
+  });
+  organization.getTree();
+
+
+  var handleOrg = new Vue({
+    el: '#layer',
+    data: {
+      toAdd: true,
+      toEdit: false,
+      toDel: false,
+      addObj: {}
+    },
+    computed: {
+      isShow: function () {
+          console.log('===================', this.addObj)
+        return this.toAdd || this.toEdit || this.toDel
+      }
+    },
+    methods: {
+      cancel: function () {
+        this.toAdd = false;
+        this.toEdit = false;
+        this.toDel = false;
+      },
+    }
+  })
+
+  var parentCode = 0;
+  var depart = {};
+  var departments = []
+
+  var deleteId = {};
+
+  function getDepartments() {
+    POST(URLs.departments, {}).then(function (res) {
+      if (res.errcode !== 10001) {
+        alert(res.msg)
+      } else {
+        departments = res.data;
+        for (var i = 0; i < departments.length; i++) {
+          $("#departmentSelect").append(`<option value="${departments[i].departmentCode}">${departments[i].departmentName}</option>`)
+        }
+      }
+    }).catch(function (error) {
+      console.log(error);
+    });
+  }
+
+  function getTopPersons() {
+      POST(URLs.topPersons, {}).then(function (res) {
+          if (res.errcode !== 10001) {
+              alert(res.msg)
+          } else {
+              const persons = res.data;
+              for (var i = 0; i < persons.length; i++) {
+                  $("#addPersonSelect").append(`<option value="${persons[i].personCode}">${persons[i].personName}</option>`)
+                  $("#personSelect").append(`<option value="${persons[i].personCode}">${persons[i].personName}</option>`)
+              }
+          }
+      }).catch(function (error) {
+          console.log(error);
+      });
+  }
+
+  getDepartments();
+  getTopPersons();
+
+  function addDepart() {
+    var departmentName = $('input[name=add_departmentName]').val()
+    var add_personCode = $('input[name=add_personCode]').val()
+    var remark = $('input[name=add_remark]').val()
+    const body = {
+      departmentName: departmentName,
+      parentCode: parentCode,
+      persons: [add_personCode],
+      remark: remark,
+    }
+    POST(URLs.addOrg, body).then(function (res) {
+      if (res.errcode !== 10001) {
+        alert(res.msg)
+      } else {
+        $('#layer').hide();
+        $('#addNodePopup').hide();
+        organization.getTree();
+      }
+    }).catch(function (error) {
+      console.log(error);
+    });
+  }
+
+
+  function editDepart() {
+    var departmentCode = depart.departmentCode
+    var departmentName = $('input[name=edit_departmentName]').val()
+    var parentCode = $('#departmentSelect').val()
+    var personCode = $('#personSelect').val()
+    var remark = $('input[name=edit_remark]').val()
+    const body = {
+      departmentName: departmentName,
+      departmentCode: departmentCode,
+      parentCode: parentCode,
+      persons: [personCode],
+      remark: remark,
+    }
+    POST(URLs.modifyOrg, body).then(function (res) {
+      if (res.errcode !== 10001) {
+        alert(res.msg)
+      } else {
+        $('#layer').hide();
+        $('#editNodePopup').hide();
+        organization.getTree();
+      }
+    }).catch(function (error) {
+      console.log(error);
+    });
+  }
+
+  function deleteDepart() {
+    POST(URLs.delOrg, deleteId).then(function (res) {
+      if (res.errcode !== 10001) {
+        alert(res.msg)
+      } else {
+        $('#layer').hide();
+        $('#deleteNodePopup').hide();
+        organization.getTree();
+      }
+    }).catch(function (error) {
+      console.log(error);
+    });
+  }
+
+  $(function () {
+
+    var organizeFramework = $('.organizeFramework');
+    var layer = $('#layer');
+    var addNodePopup = $('#addNodePopup');
+    var editNodePopup = $('#editNodePopup');
+    var deleteNodePopup = $('#deleteNodePopup');
+
+    organizeFramework.delegate('.addNode', 'click', function (e) {
+      parentCode = e.target.id;
+      layer.show();
+      addNodePopup.show()
+    });
+
+    organizeFramework.delegate('.editNode', 'click', function (e) {
+      var id = e.target.id
+        console.log('================', id)
+      var departmentCode = id.split("$")[0]
+      var departmentName = id.split("$")[1]
+      var remark = id.split("$")[2]
+      var parentCode = id.split("$")[3]
+      depart = {
+        departmentCode: departmentCode,
+        departmentName: departmentName,
+        remark: remark,
+        parentCode: parentCode,
+      }
+      $('input[name=edit_departmentName]').val(departmentName)
+      $('input[name=edit_personCode]').val(parentCode)
+      $('input[name=edit_remark]').val(remark)
+      $("#departmentSelect").val(parentCode)
+      layer.show();
+      editNodePopup.show()
+    });
+
+    organizeFramework.delegate('.deleteNode', 'click', function (e) {
+      var id = e.target.id
+      var departmentCode = id.split("$")[0]
+      var parentCode = id.split("$")[1]
+      deleteId = {departmentCode: departmentCode, parentCode: parentCode}
+      layer.show();
+      deleteNodePopup.show()
+    })
+
+
+    //        var treeNodeSelect = $('#treeNodeSelect');
+    //        treeNodeSelect.delegate('.tree-node__expand', 'click', function () {
+    //          var status = $(this).parent('.tree-node').next('.group').css('display');
+    //          if (status === 'none') {
+    //            $(this).parent('.tree-node').next('.group').slideDown();
+    //            $(this).parent('.tree-node').parent('.treeitem').siblings('.treeitem').find('.group').slideUp();
+    //            $(this).parent('.tree-node').parent('.treeitem').siblings('.treeitem').find('.tree-node__expand').removeClass('expand');
+    //            $(this).addClass('expand');
+    //            console.log(this)
+    //          } else {
+    //            $(this).parent('.tree-node').next('.group').slideUp();
+    //            $(this).parent('.tree-node').parent('.treeitem').siblings('.treeitem').find('.tree-node__expand').removeClass('expand');
+    //            $(this).removeClass('expand');
+    //          }
+    //        });
+    //
+    //        treeNodeSelect.delegate('.tree-node__label', 'click', function () {
+    //          $('#parentNode').val($(this).text());
+    //
+    //        });
+
+  })
+
+</script>
+
+</body>
+</html>

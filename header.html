@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport"
+	      content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>实时监控</title>
+	<link rel="stylesheet" href="css/swiper.min.css">
+	<link rel="stylesheet" href="css/common.css">
+	<link rel="stylesheet" href="css/realTimeMonitor.css">
+	<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+</head>
+<body>
+<div id="fixed-top">
+	<a href="javascript:" class="logo fl"><img src="images/commonLogo.png" alt=""></a>
+	<div class="fixed-top-nav fl">
+		<ul class="clf">
+			<li><a href="realTimeMonitor.html" class="link_1">实时监控</a></li>
+			<li><a href="trackPlayBack.html" class="link_2">轨迹回放</a></li>
+			<li><a href="javascript:" class="link_3">考勤管理</a></li>
+			<li><a href="alarmManage.html" class="link_4 active">告警管理</a></li>
+			<li><a href="healthManage.html" class="link_5">健康管理</a></li>
+			<li><a href="systemManage_peopleManage.html" class="link_6">系统管理</a></li>
+		</ul>
+	</div>
+	<div class="fixed-top-operate fr">
+		<div><a href="message.html"><img src="images/nav_iconEmail.png" alt=""></a></div>
+		<div><a href="alarmHistoryData.html"><img src="images/nav_iconWarn.png" alt=""></a></div>
+		<div>
+			<a href="javascript:"><img src="images/nav_iconUser.png" alt=""></a>
+			<div class="subMenu">
+				<ul>
+					<li><a href="changePassword.html">修改密码</a></li>
+					<li><a href="javascript:" @click="logout">退出登录</a></li>
+				</ul>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="js/jquery.min.js"></script>
+<script src="js/com.js"></script>
+<script>
+	const token = getCookie("token")
+	const userinfo = JSON.parse(getCookie("userinfo"))
+	console.log(userinfo)
+	new Vue({
+		el: '#fixed-top',
+		data: {
+			loading: false,
+			user: userinfo,
+		},
+		methods: {
+			goToTrackPlayBack: function () {
+				location.href = "trackPlayBack.html"
+			},
+			submitLogin: function () {
+				const that = this;
+				this.loading = true
+				$.ajax({
+					type: "POST",
+					url: serverPath + "/permission/user/login",
+					data: JSON.stringify({
+						username: this.username,
+						password: CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(this.password))
+					}),
+					dataType: 'json',
+					contentType: 'application/json',
+					success: function (msg) {
+						console.log('==success=', msg, msg.errcode !== "10001", msg.errcode)
+						that.loading = false
+						if (msg.errcode !== 10001) {
+							alert(msg.msg)
+						} else {
+							setCookie("token", msg.data.token)
+							setCookie("userinfo", JSON.stringify(msg.data))
+							location.href = "realTimeMonitor.html"
+						}
+					},
+					error: function (error) {
+						console.log('=fail==', msg)
+						that.loading = false
+					}
+				});
+
+			},
+
+			logout: function () {
+				const that = this;
+				this.loading = true
+				$.ajax({
+					type: "POST",
+					url: serverPath + "/permission/user/logout",
+					data: JSON.stringify({
+						token: token,
+						userId: userinfo.userId,
+						roleId: userinfo.roleId
+					}),
+					dataType: 'json',
+					contentType: 'application/json',
+					success: function (msg) {
+						console.log('==success=', msg, msg.errcode !== "10001", msg.errcode)
+						that.loading = false
+						if (msg.errcode !== 10001) {
+							alert(msg.msg)
+						} else {
+							setCookie("token", msg.data.token)
+							setCookie("userinfo", JSON.stringify(msg.data))
+							location.href = "realTimeMonitor.html"
+						}
+					},
+					error: function (error) {
+						console.log('=fail==', msg)
+						that.loading = false
+					}
+				});
+
+			},
+
+		}
+	})
+</script>
+
+</body>
+</html>

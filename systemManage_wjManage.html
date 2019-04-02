@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>地图管理</title>
+    <link rel="stylesheet" href="css/element-ui/index.css">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/systemManage_wjManage.css">
+
+    <script src="js/loadcommonjs.js"></script>
+</head>
+<body>
+<div id="wrap">
+    <canvas id="space"><a href="javascript:" id="warp" style="display: none;">WARP SPEED</a></canvas>
+
+    <div id="fixed-top">
+        <a href="javascript:" class="logo fl"><img src="images/commonLogo.png" alt=""></a>
+        <div class="fixed-top-nav fl">
+            <ul class="clf">
+                <li v-for="item in menus" :class="[currPath == item.path? 'active' : '',  item.css]"><a
+                        :href="item.path"><span
+                        v-text="item.desc"></span></a></li>
+            </ul>
+        </div>
+        <div class="fixed-top-operate fr">
+            <div><a href="message.html"><img src="images/nav_iconEmail.png" alt=""></a></div>
+            <div>
+                <el-badge :value="amount" class="item">
+                    <a href="alarmHistoryData.html"><img width="40" src="images/nav_iconWarn.png" alt=""></a>
+                </el-badge>
+            </div>
+            <div>
+                <a href="javascript:"><img src="images/nav_iconUser.png" alt=""></a>
+                <div class="subMenu">
+                    <ul>
+                        <li><a href="changePassword.html">修改密码</a></li>
+                        <li><a href="javascript:void(0)" @click="logout">退出登录</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="fixed-side">
+        <div class="systemManage-nav">
+            <ul>
+                <li>
+                    <a href="systemManage_peopleManage.html">人员管理</a>
+                    <div>
+                        <a href="systemManage_peopleManage.html">人员管理</a>
+                        <a href="systemManage_organizeManage.html">组织管理</a>
+                    </div>
+                </li>
+                <li><a href="systemManage_areaManage.html">区域管理</a></li>
+                <li>
+                    <a href="systemManage_tacticsManage.html">策略管理</a>
+                    <div>
+                        <a href="systemManage_tacticsManage.html" class="active">围栏策略</a>
+                    </div>
+                </li>
+                <li>
+                    <a href="systemManage_equManage.html">设备管理</a>
+                    <div>
+                        <a href="systemManage_equManage.html">设备升级</a>
+                    </div>
+                </li>
+                <li class="active">
+                    <a href="systemManage_wjManage.html">文件管理</a>
+                    <div>
+                        <a href="systemManage_wjManage.html" class="active">地图管理</a>
+                        <a href="systemManage_wjManage_bb.html">版本管理</a>
+                    </div>
+                </li>
+                <li><a href="javascript:">二次开发</a></li>
+            </ul>
+        </div>
+    </div>
+    <div id="fixed-main-wrap">
+        <div id="abs-level3menu"></div>
+        <div id="abs-main">
+            <div class="rsect">
+                <div class="nav-t clf">
+                    <div class="searchDiv">
+                        <input type="search" title="" placeholder="请输入名称" v-model="search">
+                        <button class="searchBtn" @click="getFilesList(1)"><i
+                                class="iconfont icon-xingtaiduICON_sousuo--"></i></button>
+                    </div>
+                    <a href="javascript:" @click="batchDelete">批量删除</a>
+                    <a href="systemManage_wjManage_xzdt.html">+增加地图</a>
+                </div>
+                <div class="tab">
+                    <span class="line"></span>
+                    <table>
+                        <tr class="fst">
+                            <th><input type="checkbox" @change="selectAll"></th>
+                            <th>序号</th>
+                            <th>名称</th>
+                            <th>大小</th>
+                            <th>平面ID</th>
+                            <th>操作</th>
+                        </tr>
+                        <tr v-for="(item, index) in list">
+                            <td><input type="checkbox" :value="item.id" v-model="batchDeleteSet"></td>
+                            <td>{{(currPage-1)*10 + index+1}}</td>
+                            <td>{{item.name}}</td>
+                            <td>{{item.width}}*{{item.length}}</td>
+                            <td>{{item.mapCode}}</td>
+                            <td>
+                <span>OFF <input class="switch switch-anim" type="checkbox" :checked="item.status==1"
+                                 @change="switchStrategy" :value="item.id"> ON</span>
+                                <a href="javascript:" class="edit" @click="showEditPop(item)"><i
+                                        class="iconfont icon-bianji"></i></a>
+                                <a href="javascript:" class="delete" @click="deleteFile([item.id])"><i
+                                        class="iconfont icon-delete"></i></a>
+                            </td>
+                        </tr>
+                    </table>
+                    <span class="line"></span>
+                </div>
+                <div class="paging">
+                    <span class="total">共{{totalRows}}条</span>
+                    <a href="javascript:" class="btn_prev" @click="pre"><i class="iconfont icon-xiangzuoanniu"></i></a>
+                    <span :class="n==currPage?'number':''" v-for="n in totalPages" v-if="currPage-3<n && n < currPage+3"
+                          @click="getFilesList(n)"><a href="javascript:">{{n}}</a></span>
+                    <a href="javascript:" class="btn_next" @click="post"><i
+                            class="iconfont icon-xiangzuoanniu1"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="layer" v-if="isShow">
+    <div id="editInfo" class="popup">
+        <div class="bg1"></div>
+        <div class="bg2"></div>
+        <div class="clf">
+            <div class="list-title fl"><span>{{popupTitle}}</span></div>
+            <div class="listnav-r fr">
+                <a href="#" class="qd fl" @click="modifyFile">确定</a>
+                <a href="javascript:" class="qx fl cancelBtn" @click="cancel">取消</a>
+            </div>
+        </div>
+        <div class="sect">
+            <div>
+                <div class="fl">
+                    <span>地图名称</span>
+                </div>
+                <input type="text" placeholder="" v-model="addObj.name">
+            </div>
+            <div>
+                <div class="fl">
+                    <span>平面ID</span>
+                </div>
+                <input type="text" placeholder="" v-model="addObj.mapCode">
+            </div>
+            <!--
+                  <div>
+                    <div class="fl">
+                      <span class="red">*</span><span>长</span>
+                      <input title="">
+                    </div>
+                    <div class="fr">
+                      <span class="red">*</span><span>宽</span>
+                      <input title="" v-model="addPerson.sex">
+                    </div>
+                  </div>
+            -->
+        </div>
+    </div>
+</div>
+
+<script language=javascript src='js/pages/header.js'></script>
+<script src="js/common.js"></script>
+
+<script>
+    var files = new Vue({
+        el: '#fixed-main-wrap',
+        data: {
+            list: [],
+            search: '',
+            batchDeleteSet: [],
+            currPage: 1,
+            totalRows: 0,
+        },
+        computed: {
+            totalPages: function () {
+                return Math.ceil(this.totalRows / 10)
+            }
+        },
+        methods: {
+            pre: function () {
+                if (this.currPage > 1) {
+                    this.getFilesList(this.currPage - 1)
+                }
+            },
+            post: function () {
+                if (this.currPage < Math.ceil(this.totalRows / 10)) {
+                    this.getFilesList(this.currPage + 1)
+                }
+            },
+            getFilesList: function (currPage) {
+                const that = this;
+                that.currPage = currPage;
+                POST(URLs.allFilesImg, {
+                    page: currPage || 1,
+                    listRows: 10,
+                    type: 0,
+                    name: this.search,
+                }).then(function (res) {
+                    if (res.errcode !== 10001) {
+                        that.$message({
+                            message: res.msg,
+                            type: 'error'
+                        });
+                    } else {
+                        that.list = res.data.result;
+                        that.totalRows = res.data.totalRows;
+                    }
+                }).catch(function (error) {
+                    console.log(error);
+                });
+            },
+
+            selectAll: function (e) {
+                if (e.target.checked) {
+                    this.batchDeleteSet = this.list.map(e => e.id
+                )
+                    ;
+                } else {
+                    this.batchDeleteSet = []
+                }
+            },
+
+            batchDelete: function () {
+                this.deleteFile(this.batchDeleteSet)
+            },
+
+            deleteFile: function (list) {
+                const that = this;
+                POST(URLs.delMap, {ids: list}).then(function (res) {
+                    if (res.errcode !== 10001) {
+                        that.$message({
+                            message: res.msg,
+                            type: 'error'
+                        });
+                    } else {
+                        files.getFilesList(1)
+                    }
+                }).catch(function (error) {
+                    console.log(error);
+                });
+            },
+
+            switchStrategy: function (e) {
+                const that = this;
+                console.log('================', e.target.checked, e.target.value);
+                POST(URLs.fdfsSwitch, {id: e.target.value, status: e.target.checked ? 1 : 0}).then(function (res) {
+                    if (res.errcode !== 10001) {
+                        that.$message({
+                            message: res.msg,
+                            type: 'error'
+                        });
+                    } else {
+                        files.getFilesList(1)
+                    }
+                }).catch(function (error) {
+                    console.log(error);
+                });
+            },
+
+            showEditPop: function (item) {
+                editInfoPopup.isShow = true;
+                editInfoPopup.popupTitle = '修改地图信息';
+                editInfoPopup.addObj = JSON.parse(JSON.stringify(item));
+            }
+        }
+    });
+
+    files.getFilesList(1);
+
+    var editInfoPopup = new Vue({
+        el: '#layer',
+        data: {
+            isShow: false,
+            popupTitle: '',
+            addObj: {
+                mapCode: '',
+                name: '',
+            }
+        },
+        methods: {
+            cancel: function () {
+                this.isShow = false;
+            },
+            modifyFile: function () {
+                const that = this;
+                const addObj = this.addObj;
+                addObj.type = parseInt(addObj.type);
+                POST(URLs.changeImg, addObj).then(function (res) {
+                    if (res.errcode !== 10001) {
+                        that.$message({
+                            message: res.msg,
+                            type: 'error'
+                        });
+                    } else {
+                        that.isShow = false;
+                        files.getFilesList(1);
+                    }
+                }).catch(function (error) {
+                    console.log(error);
+                });
+            },
+
+        }
+    })
+</script>
+
+</body>
+</html>

@@ -1,0 +1,48 @@
+
+.tempDisarm{position: absolute;top: 2rem;left: 3.625rem;width: 14rem;background: url("../images/tempDisarm_hideBg.png") no-repeat center/100% 100%;transition: all .3s;z-index: 99;}
+.tempDisarm.show{left: 99%;background: url("../images/tempDisarm_bg.png") no-repeat center/100% 100%;}
+.tempDisarm .headline{text-align: center;font-size: 1rem;line-height: 2rem;}
+.tempDisarm .headline .toggleBtn{position: absolute;top: .5rem;right: .5rem;width: 1rem;height: 1rem;background: url("../images/doubleArrow_right.png") no-repeat center/contain;}
+.tempDisarm .headline .toggleBtn.show{background: url("../images/doubleArrow_left.png") no-repeat center/contain;}
+.tempDisarm .editDiv{padding: 0 2rem;transition: all .3s;opacity: 0;}
+.tempDisarm.show .editDiv{opacity: 1;}
+.tempDisarm .editDiv .subTitle{font-size: .875rem;line-height: 3.4;}
+.tempDisarm .editDiv .options label{float: left;width: 43%;margin-bottom: 1.25rem;}
+.tempDisarm .editDiv .options label:nth-of-type(odd){margin-right: 14%;}
+.tempDisarm .editDiv .options label span{display: block;width: 100%;font-size: .75rem;line-height: 1.8rem;text-align: center;border: 1px solid #fff;border-radius: .2rem;transition: all .3s;}
+.tempDisarm .editDiv .options input[type=radio]:checked + span{background-color: #1f6b7b;}
+.tempDisarm .editDiv .options input[type=text]{float: left;width: 73%;height: 1.8rem;border: 1px solid #fff;border-radius: .2rem;text-align: center;font-size: .75rem;}
+.tempDisarm .editDiv .options input[type=text] + span{float: left;width: 14%;text-align: center;}
+.tempDisarm .editDiv .confirmBtn{display: block;width: 43%;font-size: 14px;line-height: 1.8rem;text-align: center;border-radius: .3rem;background-color: #1f6b7b;margin: 1.5rem auto 0;box-shadow: 0 0 .8rem #fff inset;}
+.tempDisarm .editDiv .viewRecord{display: block;text-align: center;font-size: .8rem;margin: .5rem auto;text-decoration: underline;}
+
+#abs-main{padding-top: 0;padding-left: 20%;}
+
+.leaveDiv{float: left;width: 25%;height: 90%;}
+.leaveDiv .title{font-size: 1rem;line-height: 3.8rem;text-align: center;font-weight: bold;color: #fff;}
+
+.cellDiv{float: left;}
+
+
+.LeaveDetails{float: left;}
+
+
+.chartDiv-row{padding: 0 0 3.5rem;width: 85%;margin: auto;}
+.chartDiv-row:after{content: '';display: block;clear: both;}
+.chartDiv-col{float: left;width: 50%;padding: 0 2%;}
+.chartDiv-cel{width: 100%;height: 17.375rem;margin: auto;background: url("../images/chartDivBg.png") no-repeat center/100% 100%;padding-top: 3.8rem;position: relative;}
+.chartDiv-cel > .chartTitle{position: absolute;top: 0;left: 0;right: 0;text-align: center;line-height: 3.8rem;font-size: 1rem;color: #abd7ef;font-weight: bold;}
+
+.echart{width: 50%;height: 100%;float: left;}
+
+.dataDiv{float: left;width: 40%;font-size: .875rem;line-height: 1.3;color: #fff;}
+.dataDiv > div{height: 6.5rem;}
+.dataDiv > div:first-of-type{border-bottom: 1px dashed #fff;}
+.dataDiv > div.dataDivTop{padding: 1.3rem 0;padding-left: 4rem;}
+.dataDiv > div.dataDivBot{padding: 1.3rem 0;padding-left: 1.875rem;}
+.dataDiv > p{padding-left: 4rem;}
+.dataDiv > p:first-of-type{margin-top: 4rem;}
+
+.el-input--suffix .el-input__inner{padding-right:0;}
+
+

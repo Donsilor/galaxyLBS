@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>设备管理 - 设备升级</title>
+    <link rel="stylesheet" href="css/element-ui/index.css">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/systemManage_equManage.css">
+    <script src="js/loadcommonjs.js"></script>
+</head>
+<body>
+<div id="wrap">
+    <canvas id="space"><a href="javascript:" id="warp" style="display: none;">WARP SPEED</a></canvas>
+
+    <div id="fixed-top">
+        <a href="javascript:" class="logo fl"><img src="images/commonLogo.png" alt=""></a>
+        <div class="fixed-top-nav fl">
+            <ul class="clf">
+                <li v-for="item in menus" :class="[currPath == item.path? 'active' : '',  item.css]"><a
+                        :href="item.path"><span v-text="item.desc"></span></a></li>
+            </ul>
+        </div>
+        <div class="fixed-top-operate fr">
+            <div><a href="message.html"><img src="images/nav_iconEmail.png" alt=""></a></div>
+            <div>
+                <el-badge :value="amount" class="item">
+                    <a href="alarmHistoryData.html"><img width="40" src="images/nav_iconWarn.png" alt=""></a>
+                </el-badge>
+            </div>
+            <div>
+                <a href="javascript:"><img src="images/nav_iconUser.png" alt=""></a>
+                <div class="subMenu">
+                    <ul>
+                        <li><a href="changePassword.html">修改密码</a></li>
+                        <li><a href="javascript:void(0)" @click="logout">退出登录</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="fixed-side">
+        <div class="systemManage-nav">
+            <ul>
+                <li>
+                    <a href="systemManage_peopleManage.html">人员管理</a>
+                    <div>
+                        <a href="systemManage_peopleManage.html">人员管理</a>
+                        <a href="systemManage_organizeManage.html">组织管理</a>
+                    </div>
+                </li>
+                <li><a href="systemManage_areaManage.html">区域管理</a></li>
+                <li>
+                    <a href="systemManage_tacticsManage.html">策略管理</a>
+                    <div>
+                        <a href="systemManage_tacticsManage.html">围栏策略</a>
+                    </div>
+                </li>
+                <li class="active">
+                    <a href="systemManage_equManage.html">设备管理</a>
+                    <div>
+                        <a href="systemManage_equManage.html" class="active">设备升级</a>
+                    </div>
+                </li>
+                <li>
+                    <a href="systemManage_wjManage.html">文件管理</a>
+                    <div>
+                        <a href="systemManage_wjManage.html">地图管理</a>
+                        <a href="systemManage_wjManage_bb.html">版本管理</a>
+                    </div>
+                </li>
+                <li><a href="javascript:">二次开发</a></li>
+            </ul>
+        </div>
+    </div>
+    <div id="fixed-main-wrap">
+        <div id="abs-level3menu"></div>
+        <div id="abs-main">
+            <div class="equ">
+                <p class="x">x</p>
+                <p class="two">设备升级</p>
+                <p class="th"><span>当前基站版本：{{version.ancVer}}</span> <span>上次升级时间：{{updateTime}}</span></p>
+                <p class="th"><span>当前标签版本：{{version.tagVer}}</span> <span>上次升级时间：{{updateTime}}</span></p>
+                <div class="btom"><span class="fl">基站升级文件</span>
+                    <select class="sel fl" v-model="fileId">
+                        <option v-for="item in files" :value="item.id">{{item.name}}</option>
+                    </select>
+                    <a class="but fl" @click="updateVersion">确认升级</a></div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<script src="js/common.js"></script>
+<script src="js/pages/header.js"></script>
+
+<script>
+    var version = new Vue({
+        el: '#fixed-main-wrap',
+        data: {
+            version: {},
+
+            files: [],
+            fileId: ''
+        },
+        mounted: function () {
+            this.getFilesList();
+            this.getVersion();
+        },
+        computed: {
+            updateTime: function () {
+                return moment(this.version.tagUpTime * 1000).format("YYYY-MM-DD hh:mm:ss")
+            }
+
+        },
+        methods: {
+            getVersion: function () {
+                const that = this;
+                POST(URLs.version, {}).then(function (res) {
+                    if (res.errcode !== 10001) {
+                        that.$message({
+                            message: res.msg,
+                            type: 'error'
+                        });
+                    } else {
+                        that.version = res.data
+                        console.log('=============', res.data)
+                    }
+                }).catch(function (error) {
+                    console.log(error);
+                });
+            },
+
+            getFilesList: function () {
+                const that = this;
+                POST(URLs.allFilesImg, {
+                    page: 1,
+                    listRows: 50,
+                    type: 1,
+                }).then(function (res) {
+                    console.log('========================', res)
+                    if (res.errcode !== 10001) {
+                        that.$message({
+                            message: res.msg,
+                            type: 'error'
+                        });
+                    } else {
+                        that.files = res.data.result;
+                    }
+                }).catch(function (error) {
+                    console.log(error);
+                });
+            },
+
+
+            updateVersion: function () {
+                const that = this;
+                const filterFile = function (id) {
+                    for (var i = 0; i < that.files.length; i++) {
+                        if (id == that.files[i].id) {
+                            return that.files[i];
+                        }
+                    }
+                }
+                const ff = filterFile(this.fileId)
+
+                POST(URLs.upgrade, {
+                    cmdType: that.version.cmdType,
+                    cmdDir: that.version.cmdDir,
+                    downPath: ff.downPath,
+                    serverIP: that.version.serverIP,
+                    serverPort: that.version.serverPort,
+                    name: ff.name,
+                }).then(function (res) {
+                    if (res.errcode !== 10001) {
+                        that.$message({
+                            message: res.msg,
+                            type: 'error'
+                        });
+                    } else {
+                        console.log('=============', res.data)
+                    }
+                }).catch(function (error) {
+                    console.log(error);
+                });
+            },
+        }
+    })
+
+</script>
+
+</body>
+</html>

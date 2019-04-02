@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport"
+	      content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>通知消息</title>
+	<link rel="stylesheet" href="css/element-ui/index.css">
+	<link rel="stylesheet" href="css/common.css">
+	<link rel="stylesheet" href="css/message.css">
+	<script src="js/loadcommonjs.js"></script>
+</head>
+<body>
+<div id="wrap">
+	<canvas id="space"><a href="javascript:" id="warp" style="display: none;">WARP SPEED</a></canvas>
+
+	<div id="fixed-top">
+		<a href="javascript:" class="logo fl"><img src="images/commonLogo.png" alt=""></a>
+		<div class="fixed-top-nav fl">
+			<ul class="clf">
+				<li v-for="item in menus" :class="[currPath == item.path? 'active' : '',  item.css]"><a :href="item.path"><span v-text="item.desc"></span></a></li>
+			</ul>
+		</div>
+		<div class="fixed-top-operate fr">
+			<div><a href="message.html"><img src="images/nav_iconEmail.png" alt=""></a></div>
+			<div>
+				<el-badge :value="amount" class="item">
+					<a href="alarmHistoryData.html"><img width="40" src="images/nav_iconWarn.png" alt=""></a>
+				</el-badge>
+			</div>
+			<div>
+				<a href="javascript:"><img src="images/nav_iconUser.png" alt=""></a>
+				<div class="subMenu">
+					<ul>
+						<li><a href="changePassword.html">修改密码</a></li>
+						<li><a href="javascript:void(0)" @click="logout">退出登录</a></li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div id="fixed-side"></div>
+	<div id="fixed-main-wrap">
+		<div id="abs-level3menu"></div>
+		<div id="abs-main">
+			<div class="messageDiv">
+				<div class="nav-t clf">
+					<span class="fl">通知消息</span>
+					<div class="fr">
+						<a href="javascript:" class="markBtn">全部标为已读</a>
+						<div class="searchDiv">
+							<input type="text" id="search" title="" placeholder="请输入">
+							<button class="searchBtn"><i class="iconfont icon-xingtaiduICON_sousuo--"></i></button>
+							<div class="absHistoryDiv">
+								<div class="bar clf">
+									<span class="fl">最近搜索</span>
+									<a href="javascript:" class="clear-history fr">清除搜索历史</a>
+								</div>
+								<div class="keysDiv search-history-list"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="messageList">
+					<div class="item unread">
+						<div class="fl">
+							<div class="icon"><i class="iconfont icon-dianliang"></i></div>
+							<div class="detail">
+								<p class="title">电量告警</p>
+								<p class="descript">监仓59钟晓明（关联标签ID T1807162628）手环电量低于20%，请及时更换。</p>
+							</div>
+						</div>
+						<div class="time">7月20日 09:48</div>
+					</div>
+					<div class="item unread">
+						<div class="fl">
+							<div class="icon"><i class="iconfont icon-shebeigaojing"></i></div>
+							<div class="detail">
+								<p class="title">设备告警</p>
+								<p class="descript">基站12（位于监仓59）疑出现故障，请及时检查。</p>
+							</div>
+						</div>
+						<div class="time">7月20日 09:48</div>
+					</div>
+					<div class="item">
+						<div class="fl">
+							<div class="icon"><i class="iconfont icon-cpu"></i></div>
+							<div class="detail">
+								<p class="title">CPU告警</p>
+								<p class="descript">CPU使用率超过80%。</p>
+							</div>
+						</div>
+						<div class="time">7月20日 09:48</div>
+					</div>
+					<div class="item">
+						<div class="fl">
+							<div class="icon"><i class="iconfont icon-storage"></i></div>
+							<div class="detail">
+								<p class="title">存储告警</p>
+								<p class="descript">存储空间超过80%。</p>
+							</div>
+						</div>
+						<div class="time">7月20日 09:48</div>
+					</div>
+					<div class="item">
+						<div class="fl">
+							<div class="icon"><i class="iconfont icon-neicun"></i></div>
+							<div class="detail">
+								<p class="title">内存告警</p>
+								<p class="descript">内存超过80%。</p>
+							</div>
+						</div>
+						<div class="time">7月20日 09:48</div>
+					</div>
+					<div class="item">
+						<div class="fl">
+							<div class="icon"><i class="iconfont icon-neicun"></i></div>
+							<div class="detail">
+								<p class="title">内存告警</p>
+								<p class="descript">内存超过80%。</p>
+							</div>
+						</div>
+						<div class="time">7月20日 09:48</div>
+					</div>
+					<div class="item">
+						<div class="fl">
+							<div class="icon"><i class="iconfont icon-neicun"></i></div>
+							<div class="detail">
+								<p class="title">内存告警</p>
+								<p class="descript">内存超过80%。</p>
+							</div>
+						</div>
+						<div class="time">7月20日 09:48</div>
+					</div>
+					<div class="item">
+						<div class="fl">
+							<div class="icon"><i class="iconfont icon-neicun"></i></div>
+							<div class="detail">
+								<p class="title">内存告警</p>
+								<p class="descript">内存超过80%。</p>
+							</div>
+						</div>
+						<div class="time">7月20日 09:48</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script src="js/common.js"></script>
+<script src="js/pages/header.js"></script>
+<script>
+
+	$(function () {
+
+		function search() {
+			$(".searchBtn").click(function () {
+				searchHistory($("#search").val());
+				console.log(localStorage);
+			});
+		}
+
+		search();
+
+		function searchHistory(search_value) {
+			var len = 6;  //设定存储的历史记录个数
+			if (search_value !== "" && !judgeRepeat(search_value)) {
+				insertToHistoryList(search_value, len);
+				if (localStorage.length < len)//0 1 2 3 4
+				{
+					localStorage.setItem(localStorage.length, search_value);
+				} else {
+					for (var i = 0; i < len; ++i) {
+						if (i === len - 1) {
+							localStorage.setItem(i, search_value);
+							return;
+						}
+						var next_value = localStorage.getItem(i + 1);
+						localStorage.setItem(i, next_value);
+					}
+				}
+
+			}
+		}
+
+		/* 如果搜索结果与本地存储相同，则不行存储 */
+		function judgeRepeat(search_value) {
+			var repeat_bool = false;
+			for (var key in localStorage) {
+				if (search_value === localStorage.getItem(key)) {
+					return true;
+				}
+			}
+		}
+
+		/* 将搜索结果插入到历史记录中 */
+		function insertToHistoryList(search_value, len) {
+			var str = "<span>" + search_value + "</span>";
+			var searchHistoryList = $(".search-history-list");
+			if (searchHistoryList.children().length === 0) {
+				searchHistoryList.append($(str));
+			} else {
+				if (searchHistoryList.children().length < len) {
+					$(str).insertBefore($(".search-history-list span:eq(0)"));
+				} else {
+					$(".search-history-list span:last").remove();  //超过len个则移除最后一个
+					$(str).insertBefore($(".search-history-list span:eq(0)"));
+				}
+			}
+		}
+
+
+		/* 初始化历史记录列表 */
+		function buildHistory() {
+			for (var i = 0; i < localStorage.length; ++i) {
+				var str = "<span>" + localStorage.getItem(localStorage.length - 1 - i) +
+					"</span>";
+				$(str).appendTo($(".search-history-list"));
+			}
+		}
+
+		buildHistory();
+
+		/* 清空历史搜索记录 */
+		$(".clear-history").click(function () {
+			localStorage.clear();
+			$(".search-history-list").empty();
+			console.log("History has been cleared");
+		});
+
+	})
+
+</script>
+</body>
+</html>

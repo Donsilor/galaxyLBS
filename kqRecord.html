@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>历史考勤记录</title>
+    <link rel="stylesheet" href="css/element-ui/index.css">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/clockingIn.css">
+    <link rel="stylesheet" href="iconfont/iconfont.css"/>
+    <script src="js/loadcommonjs.js"></script>
+</head>
+<body>
+<div id="wrap">
+    <canvas id="space"><a href="javascript:" id="warp" style="display: none;">WARP SPEED</a></canvas>
+
+    <div id="fixed-top">
+        <a href="javascript:" class="logo fl"><img src="images/commonLogo.png" alt=""></a>
+        <div class="fixed-top-nav fl">
+            <ul class="clf">
+                <li v-for="item in menus" :class="[currPath == item.path? 'active' : '',  item.css]"><a
+                        :href="item.path"><span
+                        v-text="item.desc"></span></a></li>
+            </ul>
+        </div>
+        <div class="fixed-top-operate fr">
+            <div><a href="message.html"><img src="images/nav_iconEmail.png" alt=""></a></div>
+            <div>
+                <el-badge :value="amount" class="item">
+                    <a href="alarmHistoryData.html"><img width="40" src="images/nav_iconWarn.png" alt=""></a>
+                </el-badge>
+            </div>
+            <div>
+                <a href="javascript:"><img src="images/nav_iconUser.png" alt=""></a>
+                <div class="subMenu">
+                    <ul>
+                        <li><a href="changePassword.html">修改密码</a></li>
+                        <li><a href="javascript:void(0)" @click="logout">退出登录</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="fixed-main-wrap">
+        <div id="abs-level3menu"></div>
+        <div id="abs-main">
+            <div class="rsect">
+                <div class="nav-t clf">
+                    <p class="nn-title">历史考勤记录</p>
+                    <div class="searchDiv" onclick="history.back(-1);">
+                        <i class="iconfont icon-xiangzuoanniu"></i><span>返回</span>
+                    </div>
+
+                    <a href="javascript:" class="fl btn">显示全部</a>
+                    <a href="javascript:" class="fr btn" @click="createExcel">导出报表</a>
+                    <div class="relDiv fr">
+                        <a href="javascript:" id="filterBtn" class="fr btn filter" @click="toggleFilter">高级筛选<i><img src="images/icon_5.png" alt=""></i></a>
+
+                        <div id="filterAbsDiv" class="filterAbsDiv" v-show="isMore">
+                            <a href="javascript:" @click="toggleFilter" class="closeBtn"><i class="iconfont icon-guanbi"></i></a>
+                            <div class="option">
+                                <label for="searchType_1">姓&emsp;&emsp;名 <input type="text" name="searchType" id="searchType_1" v-model="personName" placeholder="选填项"></label>
+                                <label for="searchType_2">工&emsp;&emsp;号 <input type="text" name="searchType" id="searchType_2" v-model="personCode" placeholder="选填项"></label>
+                                <label for="searchType_3">部&emsp;&emsp;门 <input type="text" name="searchType" id="searchType_3" v-model="departmentName" placeholder="选填项"></label>
+                            </div>
+                            <div class="option">
+                                <span class="fl">缺勤原因</span>
+                                <div class="r_content">
+                                 <span v-for="e in absenceClassList">
+                                  <input type="checkbox" :id="e.absenceId" v-model="absenceIdList" hidden :value="e.absenceId">
+                                  <label :for="e.absenceId">{{e.absenceName}}</label>
+                                </span>
+                                </div>
+                            </div>
+                            <div class="option timeOption">
+                                <span class="fl">时&emsp;&emsp;间</span>
+                                <div class="r_content">
+                                    <el-date-picker v-model="startTime" type="datetime" placeholder="开始时间" align="right" size="mini" :picker-options="pickerOptions1"></el-date-picker>
+                                    到
+                                    <el-date-picker v-model="endTime" type="datetime" placeholder="结束时间" align="right" size="mini" :picker-options="pickerOptions1"></el-date-picker>
+                                </div>
+                            </div>
+                            <div class="submit">
+                                <a @click="getAttendanceRecordList(1)">搜索</a>
+                                <a @click="cleanFilter">重置</a>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+                <div class="tab">
+                    <span class="line"></span>
+                    <table>
+                        <tr class="fst">
+                            <th>序号</th>
+                            <th>姓名</th>
+                            <th>部门</th>
+                            <th>缺勤原因</th>
+                            <th>开始时间</th>
+                            <th>结束时间</th>
+                        </tr>
+                        <tr v-for="(item, index) in list">
+                            <td>{{(currPage-1)*10 + index+1}}</td>
+                            <td>{{item.personName}}</td>
+                            <td>{{item.departmentName}}</td>
+                            <td>{{item.absenceName}}</td>
+                            <td>{{item.absenceStartTimeStr}}</td>
+                            <td>{{item.absenceEndTimeStr}}</td>
+                        </tr>
+                    </table>
+                    <span class="line"></span>
+                </div>
+                <div class="paging">
+                    <span class="total">共{{totalRows}}条</span>
+                    <a href="javascript:" class="btn_prev" @click="pre"><i class="iconfont icon-xiangzuoanniu"></i></a>
+                    <span :class="n==currPage?'number':''" v-for="n in totalPages" v-if="currPage-3<n && n < currPage+3"
+                          @click="getAttendanceRecordList(n)"><a href="javascript:">{{n}}</a></span>
+                    <a href="javascript:" class="btn_next" @click="post"><i
+                            class="iconfont icon-xiangzuoanniu1"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!--<div id="layer"></div>-->
+<script src="js/common.js"></script>
+<script src="js/pages/header.js"></script>
+<script src="js/qs.min.js"></script>
+<script>
+
+    $(function () {
+        var filterBtn = $('#filterBtn')
+        var filterAbsDiv = $('#filterAbsDiv')
+        var closeBtn = $('.closeBtn')
+        filterBtn.on('click', function () {
+            filterAbsDiv.show()
+        })
+        closeBtn.on('click', function () {
+            filterAbsDiv.hide()
+        })
+    })
+
+    var warnings = new Vue({
+        el: '#fixed-main-wrap',
+        data: {
+            pickerOptions1: {
+                shortcuts: [{
+                    text: '今天',
+                    onClick(picker) {
+                        picker.$emit('pick', new Date());
+                    }
+                }, {
+                    text: '昨天',
+                    onClick(picker) {
+                        const date = new Date();
+                        date.setTime(date.getTime() - 3600 * 1000 * 24);
+                        picker.$emit('pick', date);
+                    }
+                }, {
+                    text: '一周前',
+                    onClick(picker) {
+                        const date = new Date();
+                        date.setTime(date.getTime() - 3600 * 1000 * 24 * 7);
+                        picker.$emit('pick', date);
+                    }
+                }]
+            },
+
+            startTime: "",//new Date().getTime() - 3600 * 1000 * 24,
+            endTime: "",//new Date().getTime() ,
+
+            isMore: false,
+            list: [],
+            currPage: 1,
+            totalRows: 0,
+
+            absenceClassList: [],
+
+            personName: '',
+            personCode: '',
+            departmentName: '',
+
+            absenceIdList: [],
+
+        },
+        computed: {
+            totalPages: function () {
+                console.log('=================', this.searchType, this.disarmingIdList)
+                return Math.ceil(this.totalRows / 10)
+            }
+        },
+        mounted: function () {
+            this.getAbsenceClassList();
+            this.getAttendanceRecordList();
+        },
+        methods: {
+            pre: function () {
+                if (this.currPage > 1) {
+                    this.getAttendanceRecordList(this.currPage - 1)
+                }
+            },
+            post: function () {
+                if (this.currPage < Math.ceil(this.totalRows / 10)) {
+                    this.getAttendanceRecordList(this.currPage + 1)
+                }
+            },
+            toggleFilter: function () {
+                this.isMore = !this.isMore;
+            },
+
+            cleanFilter: function () {
+                this.personName = ''
+                this.personCode = ''
+                this.departmentName = ''
+                this.levelList = []
+                this.typeList = []
+                this.status = ''
+                this.startTime = ''
+                this.endTime = ''
+            },
+
+            cleanFilter: function () {
+                this.personName = '';
+                this.personCode = '';
+                this.departmentName = '';
+                this.absenceIdList = []
+                this.startTime = ''
+                this.endTime = ''
+            },
+
+            getAttendanceRecordList: function (n) {
+                console.log('===================', n)
+                const that = this;
+                POST(URLs.attendance_attendanceRecordList, {
+                    page: n || 1,
+                    listRows: 10,
+                    personName: that.personName,
+                    personCode: that.personCode,
+                    departmentName: that.departmentName,
+                    absenceIdList: that.absenceIdList,
+                    startTime: that.startTime !== "" ? that.startTime.getTime() : '',
+                    endTime: that.endTime !== "" ? that.endTime.getTime() : '',
+                }).then(function (res) {
+                    if (res.errcode !== 10001) {
+                        that.list = [];
+                        that.totalRows = 0;
+                    } else {
+
+                        that.list = res.data.result || [];
+                        that.currPage = (n || 1);
+                        that.totalRows = res.data.totalRows;
+                        console.log('==========', that.list)
+                    }
+                }).catch(function (error) {
+                    console.log(error);
+                });
+            },
+
+
+            getAbsenceClassList: function () {
+                const that = this;
+                POST(URLs.absence_class_list, {}).then(function (res) {
+                    if (res.errcode !== 10001) {
+                        //alert(res.msg)
+                        that.absenceClassList = [];
+                    } else {
+                        that.absenceClassList = res.data || [];
+                    }
+                }).catch(function (error) {
+                    console.log(error);
+                });
+            },
+
+
+            createExcel: function () {
+                const that = this
+
+                window.location = DownLoadURL(URLs.attendance_createExcel + '?' + Qs.stringify(
+                        {
+                            personName: that.personName !== '' ? encodeURIComponent(that.personName) : '',
+                            personCode: that.personCode !== '' ? that.personCode : '',
+                            departmentName: that.departmentName !== '' ? encodeURIComponent(that.departmentName) : '',
+                            absenceIdList: that.absenceIdList.join(','),
+                            startTime: that.startTime !== "" ? that.startTime.getTime() : '',
+                            endTime: that.endTime !== "" ? that.endTime.getTime() : '',
+                        }))
+            }
+        }
+
+    })
+
+
+</script>
+</body>
+</html>

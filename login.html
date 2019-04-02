@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>登录</title>
+    <link rel="stylesheet" href="css/element-ui/index.css">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/login.css">
+    <script src="./js/loadcommonjs.js"></script>
+</head>
+<body>
+<div class="loginMain">
+    <div class="mainTitle"><img src="images/loginTitle.png" alt=""></div>
+    <form @submit.prevent="submitLogin" class="loginForm">
+        <h4>登录</h4>
+        <div class="inputDiv"><input type="text" placeholder="用户名" v-model="username"></div>
+        <div class="inputDiv"><input type="password" placeholder="密码" v-model="password"></div>
+        <div class="inputDiv">
+            <input type="text" placeholder="输入图形验证码" v-model="code">
+            <a href="javascript:" class="captcha"><img src="images/captcha.jpg" alt=""></a>
+            <a href="javascript:" class="captcha" @click="change"><canvas id="captcha" width="92" height="42"/></a>
+        </div>
+        <div class="passHandle clf">
+            <label class="fl"><input type="checkbox">&nbsp;记住密码</label>
+            <label class="fr"><a href="javascript:">忘记密码</a></label>
+        </div>
+        <button v-if="!loading" class="loginButton"><img src="images/loginButton.png"></button>
+        <button v-if="loading" class="loginButton" disabled><img src="images/loginingButton.png"></button>
+    </form>
+</div>
+</body>
+
+<script>
+
+    var ctx = null
+
+    new Vue({
+        el: '.loginMain',
+        data: {
+            loading: false,
+            username: '',
+            password: '',
+            code: '',
+
+            text: '',
+        },
+
+        mounted: function () {
+            ctx = document.getElementById('captcha').getContext('2d')
+            drawPic(this, ctx, 92, 42);
+        },
+
+        methods: {
+
+            change: function () {
+                drawPic(this, ctx, 92, 42);
+            },
+
+            submitLogin: function () {
+                const that = this;
+                this.loading = true
+                if (that.text !== that.code.toUpperCase()) {
+                    that.$message({
+                        message: '验证码错误',
+                        type: 'error'
+                    });
+                    that.loading = false
+                    return
+                }
+                $.ajax({
+                    type: "POST",
+                    url: serverPath + "/permission/user/login",
+                    data: JSON.stringify({
+                        username: this.username,
+                        password: CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(this.password))
+                    }),
+                    dataType: 'json',
+                    contentType: 'application/json',
+                    success: function (msg) {
+                        console.log('==success=', msg, msg.errcode !== "10001", msg.errcode)
+                        that.loading = false
+                        if (msg.errcode !== 10001) {
+                            that.$message({
+                                message: msg.msg,
+                                type: 'error'
+                            });
+                            drawPic(this, ctx, 92, 42);
+                        } else {
+                            setCookie("token", msg.data.token)
+                            setCookie("userinfo", JSON.stringify(msg.data))
+                            location.href = "realTimeMonitor.html"
+                        }
+                    },
+                    error: function (error) {
+                        console.log('=fail==', msg)
+                        that.loading = false
+                    }
+                });
+
+            },
+        }
+    })
+
+</script>
+</html>
